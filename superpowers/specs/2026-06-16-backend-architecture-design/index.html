@@ -2009,7 +2009,7 @@
 </div>
 <h3 id="63-waitlist-position-read-only">6.3 Waitlist position (read-only)<a class="headerlink" href="#63-waitlist-position-read-only" title="Permanent link">&para;</a></h3>
 <blockquote>
-<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> (waitlist position visible to student in <code>/registrations/me</code>) · <a href="../../../criteria/grading-criteria/#functionality-40-points">F4</a> (waitlist size visible to organizer via <code>/events/{id}</code> counts) · <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC2</a> (covered index avoids a sequential scan)</p>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> (waitlist position visible to student in <code>/registrations/me</code>) · <a href="../../../criteria/grading-criteria/#functionality-40-points">F4</a> (waitlist size visible to organizer via <code>/events/{id}</code> counts) · <a href="../../../criteria/grading-criteria/#scalability-design-15-points">SC2</a> (covered index avoids a sequential scan)</p>
 </blockquote>
 <p>The waitlist position shown to a student in <code>GET /registrations/me</code> is computed at read time — no stored integer that can drift under concurrent writes.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">-- For /registrations/me: student is waitlisted across multiple events</span>
@@ -2559,7 +2559,7 @@
 <hr />
 <h2 id="12-scalability-notes">12. Scalability notes<a class="headerlink" href="#12-scalability-notes" title="Permanent link">&para;</a></h2>
 <blockquote>
-<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC1</a> · <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC2</a> · <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC3</a> — the table below maps each scalability concern to the current approach and the documented scaling path.</p>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#scalability-design-15-points">SC1</a> · <a href="../../../criteria/grading-criteria/#scalability-design-15-points">SC2</a> · <a href="../../../criteria/grading-criteria/#scalability-design-15-points">SC3</a> — the table below maps each scalability concern to the current approach and the documented scaling path.</p>
 </blockquote>
 <p>The current design was intentionally kept minimal (Postgres outbox + Redis Streams rather than a dedicated message broker like RabbitMQ or Kafka). This is sufficient for school-event scale and keeps the demo simple. The design documents the scaling path without requiring it to be built:</p>
 <table>
