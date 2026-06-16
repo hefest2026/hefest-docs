@@ -1,6 +1,6 @@
 site_name: Hefest — School Events System
 site_description: Architecture and development documentation for the Hefest school event management platform, built for AIBEST 2026 Burgas.
-repo_url: https://github.com/HexChap/hefest-docs
+repo_url: https://github.com/hefest2026/hefest-docs
 
 theme:
   name: material
