@@ -156,7 +156,7 @@ erDiagram
         text title
         text description
         timestamptz starts_at
-        timestamptz ends_at
+        timestamptz ends_at "nullable"
         text location
         int capacity
         text status "draft | published | cancelled"
@@ -175,8 +175,7 @@ erDiagram
         uuid id PK
         text event_type
         jsonb payload
-        text status "pending | published | processing | sent | failed"
-        int attempts
+        text status "pending | published"
         text idempotency_key UK
         timestamptz created_at
         timestamptz updated_at
@@ -185,6 +184,7 @@ erDiagram
         uuid id PK
         text idempotency_key UK
         text status "processing | completed | failed"
+        int attempts
         timestamptz created_at
         timestamptz updated_at
     }
@@ -233,8 +233,8 @@ CREATE INDEX idx_registrations_student ON registrations (student_id);
 -- Relay polling: only scan pending rows, not the full historical table
 CREATE INDEX idx_jobs_pending ON notification_jobs (id) WHERE status = 'pending';
 
--- Stale-job reclaim: find stuck 'processing' rows
-CREATE INDEX idx_jobs_processing ON notification_jobs (id) WHERE status = 'processing';
+-- Stale-delivery reclaim: find stuck 'processing' deliveries (owned by worker)
+CREATE INDEX idx_log_processing ON notification_log (idempotency_key) WHERE status = 'processing';
 ```
 
 ---
@@ -242,6 +242,9 @@ CREATE INDEX idx_jobs_processing ON notification_jobs (id) WHERE status = 'proce
 ## 7. Critical transactions
 
 These two transactions are the core of the system's correctness guarantees.
+
+!!! warning "Tortoise ORM: `select_for_update()` must be inside an explicit transaction"
+    `FOR UPDATE` only holds a lock for the life of its transaction. In Tortoise, an `Events.select_for_update()` issued *outside* an `async with in_transaction() as conn:` block runs in autocommit mode — the lock is acquired and released the instant the statement finishes, silently defeating the overbooking guarantee below. Always wrap the lock + count + insert in a single `in_transaction()` context and pass that connection (`.using_db(conn)`) to every query in the block.
 
 ### 6.1 Student registers for an event
 
@@ -288,8 +291,12 @@ sequenceDiagram
 
     Client->>API: DELETE /registrations/{id}
     API->>PG: BEGIN
-    API->>PG: SELECT capacity FROM events WHERE id=? FOR UPDATE
+    API->>PG: SELECT capacity, starts_at FROM events WHERE id=? FOR UPDATE
     Note over PG: Serializes concurrent cancellations for the same event
+    opt NOW() >= starts_at
+        API->>PG: ROLLBACK
+        API-->>Client: 409 Conflict (code: event_already_started)
+    end
     API->>PG: UPDATE registrations SET status='cancelled', cancelled_at=NOW() WHERE id=? AND student_id=?
     API->>PG: SELECT id FROM registrations WHERE event_id=? AND status='waitlisted' ORDER BY registered_at ASC LIMIT 1
     alt waitlist not empty
@@ -302,6 +309,9 @@ sequenceDiagram
 ```
 
 If the cancelling student was **waitlisted** (not confirmed), no seat is freed and the promotion step is skipped. This is a separate code path with the same transaction structure.
+
+!!! note "Cancellation window"
+    Students may cancel only **before the event's `starts_at`**. A cancellation attempt at or after `starts_at` is rejected with `409 Conflict` / `event_already_started`.
 
 ### 6.3 Waitlist position (read-only)
 
@@ -357,7 +367,7 @@ sequenceDiagram
     loop every ~1 second
         Relay->>PG: SELECT pending rows FOR UPDATE SKIP LOCKED
         PG-->>Relay: pending job(s)
-        Relay->>Redis: XADD (JSON message with ids and event type)
+        Relay->>Redis: XADD MAXLEN~10000 (JSON message with ids and event type)
         Relay->>PG: UPDATE status='published'
     end
 
@@ -377,18 +387,40 @@ sequenceDiagram
     end
 ```
 
-### 7.3 Job state machine
+!!! note "Stream retention"
+    The relay caps the stream with `XADD ... MAXLEN ~ 10000` (approximate trimming) so it cannot grow unbounded over a long-running deployment. Trimmed entries are already delivered and acknowledged; the authoritative record of what was sent lives in `notification_log`, not in the stream.
+
+### 7.3 State machines — two tables, two lifecycles
+
+The two tables track **different concerns** and must not be conflated:
+
+- `notification_jobs` tracks the **outbox handoff**: did the relay get this event onto Redis? Its terminal state is `published`.
+- `notification_log` tracks **delivery**: did the worker actually send the email? Its lifecycle is `processing → completed/failed`.
+
+The worker never writes `notification_jobs` — it owns `notification_log` only. This is what keeps the C++ worker decoupled from the outbox table: it reads from Redis and writes the delivery log, nothing more.
+
+**`notification_jobs` (owned by `api` + `relay`):**
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pending : API commits transaction
-    pending --> published : Relay reads and XADDs to Redis
-    published --> processing : Worker claims via ON CONFLICT DO NOTHING
-    processing --> completed : Email sent successfully
-    processing --> failed : Max attempts exceeded
-    failed --> [*]
-    completed --> [*]
+    [*] --> pending : API commits transaction (outbox row)
+    pending --> published : Relay XADDs to Redis, marks row published
+    published --> [*]
 ```
+
+**`notification_log` (owned by `worker`):**
+
+```mermaid
+stateDiagram-v2
+    [*] --> processing : Worker claims via INSERT ... ON CONFLICT DO NOTHING
+    processing --> completed : Email sent successfully
+    processing --> failed : Max delivery attempts exceeded
+    completed --> [*]
+    failed --> [*]
+```
+
+!!! note "Reading job history (`/notification-jobs`)"
+    The optional `/notification-jobs` endpoint reports delivery status by `LEFT JOIN`ing `notification_jobs` to `notification_log` on `idempotency_key`: a `published` job with a `completed` log row was delivered; with a `failed` log row it exhausted its retries; with **no** log row it is still in flight.
 
 ### 7.4 Domain event types
 
@@ -416,19 +448,36 @@ Example payload (ids only — worker loads names/emails from DB):
 
 ### 7.5 Idempotency strategy
 
-Email delivery is **at-least-once** — the relay may re-publish a message if it crashes between the `XADD` and marking the job `published`. Redis may also redeliver an unacknowledged message via `XAUTOCLAIM`. To prevent duplicate emails:
+Email delivery is **at-least-once** — the relay may re-publish a message if it crashes between the `XADD` and marking the job `published`. Redis may also redeliver an unacknowledged message via `XAUTOCLAIM`. To prevent duplicate emails, the worker classifies every message by the state of its `notification_log` row before sending:
 
-1. **Claim before sending:** the worker inserts a `notification_log` row with `status='processing'` using `ON CONFLICT DO NOTHING` *before* touching SMTP. Only the worker that successfully inserts proceeds.
-2. **If two workers race:** only one insert succeeds; the other sees 0 rows affected and skips.
-3. **If a worker crashes after sending but before XACK:** `XAUTOCLAIM` (timeout: 5 minutes) redelivers to another worker, which finds the log row in `completed` or `processing` state and skips. Worst case: a second email is sent — tolerable for a school events system; a missed email is worse.
+1. **Claim before sending:** the worker inserts a `notification_log` row with `status='processing'`, `attempts=1` using `ON CONFLICT DO NOTHING` *before* touching SMTP. The worker that inserts the row (1 row affected) proceeds to send.
+2. **Row already exists (0 rows affected):** the worker reads the existing row and branches on its status:
+    - `completed` → already delivered. `XACK` and stop.
+    - `failed` → already gave up (see retry policy). `XACK` and stop.
+    - `processing` → a previous worker claimed it but never finished (crash), and `XAUTOCLAIM` redelivered it. This worker resumes delivery under the retry policy below.
+3. **Worst case:** a crash *after* the SMTP send but *before* the `completed` UPDATE causes one duplicate email on redelivery — tolerable for a school events system; a missed email is worse.
 
 ```sql
 -- Worker runs this first, before hitting SMTP
-INSERT INTO notification_log (idempotency_key, status, created_at)
-VALUES ($registration_id || ':' || $event_type, 'processing', NOW())
+INSERT INTO notification_log (idempotency_key, status, attempts, created_at)
+VALUES ($registration_id || ':' || $event_type, 'processing', 1, NOW())
 ON CONFLICT (idempotency_key) DO NOTHING;
--- If 0 rows affected → skip. If 1 row inserted → proceed to send.
+-- 1 row affected → claimed, proceed to send.
+-- 0 rows affected → SELECT status, attempts and branch as above.
 ```
+
+### 7.6 Retry policy
+
+Delivery is retried on **transient** failures (SMTP connection error, 4xx greylisting, timeout) up to **3 attempts**, then parked as `failed`.
+
+| Condition | Action |
+|---|---|
+| Transient send failure, `attempts < 3` | Increment `notification_log.attempts`; do **not** `XACK`. The message stays pending in the stream and `XAUTOCLAIM` (min-idle 5 min) redelivers it to a worker. |
+| Transient send failure, `attempts >= 3` | `UPDATE notification_log SET status='failed'`; `XACK` to stop redelivery. |
+| Permanent failure (e.g. 550 invalid recipient) | `UPDATE notification_log SET status='failed'` immediately; `XACK`. No retry — it can never succeed. |
+| Send success | `UPDATE notification_log SET status='completed'`; `XACK`. |
+
+The 5-minute `XAUTOCLAIM` idle window provides natural spacing between attempts, so no explicit exponential backoff is needed at this scale. A `failed` row stays visible via `/notification-jobs` for manual inspection; automated dead-letter handling is out of scope.
 
 ---
 
@@ -440,7 +489,7 @@ All protected routes require `Authorization: Bearer <token>`.
 
 | Method | Path | Role | Description |
 |---|---|---|---|
-| `POST` | `/register` | Public | Create student account (organizers seeded or created separately — document in README) |
+| `POST` | `/register` | Public | Create student account (organizers via seed script — see README) |
 | `POST` | `/login` | Public | Returns JWT |
 
 ### Events
@@ -459,7 +508,7 @@ All protected routes require `Authorization: Bearer <token>`.
 | Method | Path | Role | Description |
 |---|---|---|---|
 | `POST` | `/events/{id}/registrations` | Student | Register → CONFIRMED or WAITLISTED |
-| `DELETE` | `/registrations/{id}` | Student (owner) | Cancel own registration; promotes next waitlisted student |
+| `DELETE` | `/registrations/{id}` | Student (owner) | Cancel own registration (allowed until event `starts_at`); promotes next waitlisted student |
 | `GET` | `/registrations/me` | Student | Own registrations + status + waitlist position |
 | `GET` | `/events/{id}/registrations` | Organizer (owner) | Confirmed registrations for own event |
 | `GET` | `/events/{id}/waitlist` | Organizer (owner) | Ordered waitlist (FIFO) for own event |
@@ -477,6 +526,13 @@ All protected routes require `Authorization: Bearer <token>`.
 |---|---|---|---|
 | `GET` | `/users/me` | Both | Current user profile |
 | `PUT` | `/users/me` | Both | Update display name / email |
+
+### Operational
+
+| Method | Path | Role | Description |
+|---|---|---|---|
+| `GET` | `/health` | Public | Liveness — process is up. Returns `200` unconditionally. |
+| `GET` | `/ready` | Public | Readiness — checks Postgres and Redis connectivity. Returns `503` if a dependency is down. |
 
 ### Error shape
 
@@ -629,18 +685,23 @@ The current design was intentionally kept minimal (Postgres outbox + Redis Strea
 
 ---
 
-## 13. Open decisions
+## 13. Decisions
 
-These items are not yet finalized and require confirmation before implementation begins.
+The following were open during the brainstorming session and have since been resolved by the team. They remain subject to mentor override.
 
-| # | Decision | Options | Default if not discussed |
-|---|---|---|---|
-| 1 | Does `ends_at` require a value, or is it nullable for single-datetime events? | Nullable / Required | Nullable |
-| 2 | Can a student re-register for an event after cancelling? | Yes (unique index allows it) / No (add hard block) | Yes — allowed |
-| 3 | Organizer creation: API endpoint vs seed script? | Seed only / Admin endpoint | Seed script, documented in README |
-| 4 | Cancellation rule for students: always allowed, or only before `starts_at`? | Always / Until start | Until `starts_at` |
-| 5 | EventCancelled: one bulk job with `event_id`, or one job per registered user? | Bulk / Per-user | Bulk (worker queries affected users) |
-| 6 | Health/readiness endpoints (`/health`, `/ready`)? | Implement / Skip | Implement — low effort, strong demo story |
+| # | Decision | Resolution |
+|---|---|---|
+| 1 | `ends_at` requirement | **Nullable** — supports single-datetime events; can be tightened later without a breaking change. |
+| 2 | Re-register after cancelling | **Allowed** — the partial unique index already permits it; a hard block would add needless code. |
+| 3 | Organizer account creation | **Seed script** (documented in README). No public org-creation endpoint, avoiding a privilege-escalation surface. |
+| 4 | Student cancellation window | **Allowed until `starts_at`** (see §7). A later attempt returns `409 / event_already_started`. |
+| 6 | Health/readiness endpoints | **Implemented** — `/health` and `/ready` (see §9). |
+
+### Stretch feature (only if time permits)
+
+| # | Feature | Plan |
+|---|---|---|
+| 5 | `EventCancelled` notifications | A bonus domain event, built only if the schedule allows. Mechanism is already settled: one **bulk** job carrying `event_id`; the worker queries the affected registrations and sends one email per user. |
 
 ---
 
