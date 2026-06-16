@@ -656,10 +656,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#73-job-state-machine" class="md-nav__link">
+  <a href="#73-state-machines-two-tables-two-lifecycles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7.3 Job state machine
+        7.3 State machines — two tables, two lifecycles
       
     </span>
   </a>
@@ -682,6 +682,17 @@
     <span class="md-ellipsis">
       
         7.5 Idempotency strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#76-retry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 Retry policy
       
     </span>
   </a>
@@ -754,6 +765,17 @@
     <span class="md-ellipsis">
       
         Profile (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operational" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational
       
     </span>
   </a>
@@ -888,13 +910,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#13-open-decisions" class="md-nav__link">
+  <a href="#13-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        13. Open decisions
+        13. Decisions
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="13. Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stretch-feature-only-if-time-permits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stretch feature (only if time permits)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1147,10 +1186,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#73-job-state-machine" class="md-nav__link">
+  <a href="#73-state-machines-two-tables-two-lifecycles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7.3 Job state machine
+        7.3 State machines — two tables, two lifecycles
       
     </span>
   </a>
@@ -1173,6 +1212,17 @@
     <span class="md-ellipsis">
       
         7.5 Idempotency strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#76-retry-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 Retry policy
       
     </span>
   </a>
@@ -1245,6 +1295,17 @@
     <span class="md-ellipsis">
       
         Profile (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operational" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Operational
       
     </span>
   </a>
@@ -1379,13 +1440,30 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#13-open-decisions" class="md-nav__link">
+  <a href="#13-decisions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        13. Open decisions
+        13. Decisions
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="13. Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#stretch-feature-only-if-time-permits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Stretch feature (only if time permits)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1667,7 +1745,7 @@
         text title
         text description
         timestamptz starts_at
-        timestamptz ends_at
+        timestamptz ends_at "nullable"
         text location
         int capacity
         text status "draft | published | cancelled"
@@ -1686,8 +1764,7 @@
         uuid id PK
         text event_type
         jsonb payload
-        text status "pending | published | processing | sent | failed"
-        int attempts
+        text status "pending | published"
         text idempotency_key UK
         timestamptz created_at
         timestamptz updated_at
@@ -1696,6 +1773,7 @@
         uuid id PK
         text idempotency_key UK
         text status "processing | completed | failed"
+        int attempts
         timestamptz created_at
         timestamptz updated_at
     }
@@ -1737,12 +1815,16 @@
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1">-- Relay polling: only scan pending rows, not the full historical table</span>
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_jobs_pending</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">notification_jobs</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;pending&#39;</span><span class="p">;</span>
 <a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
-<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1">-- Stale-job reclaim: find stuck &#39;processing&#39; rows</span>
-<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_jobs_processing</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">notification_jobs</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;processing&#39;</span><span class="p">;</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1">-- Stale-delivery reclaim: find stuck &#39;processing&#39; deliveries (owned by worker)</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_log_processing</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">notification_log</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;processing&#39;</span><span class="p">;</span>
 </code></pre></div>
 <hr />
 <h2 id="7-critical-transactions">7. Critical transactions<a class="headerlink" href="#7-critical-transactions" title="Permanent link">&para;</a></h2>
 <p>These two transactions are the core of the system's correctness guarantees.</p>
+<div class="admonition warning">
+<p class="admonition-title">Tortoise ORM: <code>select_for_update()</code> must be inside an explicit transaction</p>
+<p><code>FOR UPDATE</code> only holds a lock for the life of its transaction. In Tortoise, an <code>Events.select_for_update()</code> issued <em>outside</em> an <code>async with in_transaction() as conn:</code> block runs in autocommit mode — the lock is acquired and released the instant the statement finishes, silently defeating the overbooking guarantee below. Always wrap the lock + count + insert in a single <code>in_transaction()</code> context and pass that connection (<code>.using_db(conn)</code>) to every query in the block.</p>
+</div>
 <h3 id="61-student-registers-for-an-event">6.1 Student registers for an event<a class="headerlink" href="#61-student-registers-for-an-event" title="Permanent link">&para;</a></h3>
 <p>The challenge: two students can POST simultaneously. Without serialization, both could read "2 of 3 seats taken" and both get confirmed — creating 4 confirmed rows for a capacity-3 event (overbooking).</p>
 <p>The fix: lock the event row at the start of the transaction. Any concurrent registration for the same event blocks at that lock until the first transaction commits.</p>
@@ -1779,8 +1861,12 @@
 
     Client-&gt;&gt;API: DELETE /registrations/{id}
     API-&gt;&gt;PG: BEGIN
-    API-&gt;&gt;PG: SELECT capacity FROM events WHERE id=? FOR UPDATE
+    API-&gt;&gt;PG: SELECT capacity, starts_at FROM events WHERE id=? FOR UPDATE
     Note over PG: Serializes concurrent cancellations for the same event
+    opt NOW() &gt;= starts_at
+        API-&gt;&gt;PG: ROLLBACK
+        API--&gt;&gt;Client: 409 Conflict (code: event_already_started)
+    end
     API-&gt;&gt;PG: UPDATE registrations SET status='cancelled', cancelled_at=NOW() WHERE id=? AND student_id=?
     API-&gt;&gt;PG: SELECT id FROM registrations WHERE event_id=? AND status='waitlisted' ORDER BY registered_at ASC LIMIT 1
     alt waitlist not empty
@@ -1791,6 +1877,10 @@
     API-&gt;&gt;PG: COMMIT
     API--&gt;&gt;Client: 200 OK</code></pre>
 <p>If the cancelling student was <strong>waitlisted</strong> (not confirmed), no seat is freed and the promotion step is skipped. This is a separate code path with the same transaction structure.</p>
+<div class="admonition note">
+<p class="admonition-title">Cancellation window</p>
+<p>Students may cancel only <strong>before the event's <code>starts_at</code></strong>. A cancellation attempt at or after <code>starts_at</code> is rejected with <code>409 Conflict</code> / <code>event_already_started</code>.</p>
+</div>
 <h3 id="63-waitlist-position-read-only">6.3 Waitlist position (read-only)<a class="headerlink" href="#63-waitlist-position-read-only" title="Permanent link">&para;</a></h3>
 <p>The waitlist position shown to a student in <code>GET /registrations/me</code> is computed at read time — no stored integer that can drift under concurrent writes.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">-- For /registrations/me: student is waitlisted across multiple events</span>
@@ -1833,7 +1923,7 @@
     loop every ~1 second
         Relay-&gt;&gt;PG: SELECT pending rows FOR UPDATE SKIP LOCKED
         PG--&gt;&gt;Relay: pending job(s)
-        Relay-&gt;&gt;Redis: XADD (JSON message with ids and event type)
+        Relay-&gt;&gt;Redis: XADD MAXLEN~10000 (JSON message with ids and event type)
         Relay-&gt;&gt;PG: UPDATE status='published'
     end
 
@@ -1851,15 +1941,33 @@
             Worker-&gt;&gt;Redis: XACK
         end
     end</code></pre>
-<h3 id="73-job-state-machine">7.3 Job state machine<a class="headerlink" href="#73-job-state-machine" title="Permanent link">&para;</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Stream retention</p>
+<p>The relay caps the stream with <code>XADD ... MAXLEN ~ 10000</code> (approximate trimming) so it cannot grow unbounded over a long-running deployment. Trimmed entries are already delivered and acknowledged; the authoritative record of what was sent lives in <code>notification_log</code>, not in the stream.</p>
+</div>
+<h3 id="73-state-machines-two-tables-two-lifecycles">7.3 State machines — two tables, two lifecycles<a class="headerlink" href="#73-state-machines-two-tables-two-lifecycles" title="Permanent link">&para;</a></h3>
+<p>The two tables track <strong>different concerns</strong> and must not be conflated:</p>
+<ul>
+<li><code>notification_jobs</code> tracks the <strong>outbox handoff</strong>: did the relay get this event onto Redis? Its terminal state is <code>published</code>.</li>
+<li><code>notification_log</code> tracks <strong>delivery</strong>: did the worker actually send the email? Its lifecycle is <code>processing → completed/failed</code>.</li>
+</ul>
+<p>The worker never writes <code>notification_jobs</code> — it owns <code>notification_log</code> only. This is what keeps the C++ worker decoupled from the outbox table: it reads from Redis and writes the delivery log, nothing more.</p>
+<p><strong><code>notification_jobs</code> (owned by <code>api</code> + <code>relay</code>):</strong></p>
 <pre class="mermaid"><code>stateDiagram-v2
-    [*] --&gt; pending : API commits transaction
-    pending --&gt; published : Relay reads and XADDs to Redis
-    published --&gt; processing : Worker claims via ON CONFLICT DO NOTHING
+    [*] --&gt; pending : API commits transaction (outbox row)
+    pending --&gt; published : Relay XADDs to Redis, marks row published
+    published --&gt; [*]</code></pre>
+<p><strong><code>notification_log</code> (owned by <code>worker</code>):</strong></p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; processing : Worker claims via INSERT ... ON CONFLICT DO NOTHING
     processing --&gt; completed : Email sent successfully
-    processing --&gt; failed : Max attempts exceeded
-    failed --&gt; [*]
-    completed --&gt; [*]</code></pre>
+    processing --&gt; failed : Max delivery attempts exceeded
+    completed --&gt; [*]
+    failed --&gt; [*]</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Reading job history (<code>/notification-jobs</code>)</p>
+<p>The optional <code>/notification-jobs</code> endpoint reports delivery status by <code>LEFT JOIN</code>ing <code>notification_jobs</code> to <code>notification_log</code> on <code>idempotency_key</code>: a <code>published</code> job with a <code>completed</code> log row was delivered; with a <code>failed</code> log row it exhausted its retries; with <strong>no</strong> log row it is still in flight.</p>
+</div>
 <h3 id="74-domain-event-types">7.4 Domain event types<a class="headerlink" href="#74-domain-event-types" title="Permanent link">&para;</a></h3>
 <p>All three below are mandatory (minimum for full points). The others are implemented as bonus.</p>
 <table>
@@ -1908,18 +2016,53 @@
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="75-idempotency-strategy">7.5 Idempotency strategy<a class="headerlink" href="#75-idempotency-strategy" title="Permanent link">&para;</a></h3>
-<p>Email delivery is <strong>at-least-once</strong> — the relay may re-publish a message if it crashes between the <code>XADD</code> and marking the job <code>published</code>. Redis may also redeliver an unacknowledged message via <code>XAUTOCLAIM</code>. To prevent duplicate emails:</p>
+<p>Email delivery is <strong>at-least-once</strong> — the relay may re-publish a message if it crashes between the <code>XADD</code> and marking the job <code>published</code>. Redis may also redeliver an unacknowledged message via <code>XAUTOCLAIM</code>. To prevent duplicate emails, the worker classifies every message by the state of its <code>notification_log</code> row before sending:</p>
 <ol>
-<li><strong>Claim before sending:</strong> the worker inserts a <code>notification_log</code> row with <code>status='processing'</code> using <code>ON CONFLICT DO NOTHING</code> <em>before</em> touching SMTP. Only the worker that successfully inserts proceeds.</li>
-<li><strong>If two workers race:</strong> only one insert succeeds; the other sees 0 rows affected and skips.</li>
-<li><strong>If a worker crashes after sending but before XACK:</strong> <code>XAUTOCLAIM</code> (timeout: 5 minutes) redelivers to another worker, which finds the log row in <code>completed</code> or <code>processing</code> state and skips. Worst case: a second email is sent — tolerable for a school events system; a missed email is worse.</li>
+<li><strong>Claim before sending:</strong> the worker inserts a <code>notification_log</code> row with <code>status='processing'</code>, <code>attempts=1</code> using <code>ON CONFLICT DO NOTHING</code> <em>before</em> touching SMTP. The worker that inserts the row (1 row affected) proceeds to send.</li>
+<li><strong>Row already exists (0 rows affected):</strong> the worker reads the existing row and branches on its status:<ul>
+<li><code>completed</code> → already delivered. <code>XACK</code> and stop.</li>
+<li><code>failed</code> → already gave up (see retry policy). <code>XACK</code> and stop.</li>
+<li><code>processing</code> → a previous worker claimed it but never finished (crash), and <code>XAUTOCLAIM</code> redelivered it. This worker resumes delivery under the retry policy below.</li>
+</ul>
+</li>
+<li><strong>Worst case:</strong> a crash <em>after</em> the SMTP send but <em>before</em> the <code>completed</code> UPDATE causes one duplicate email on redelivery — tolerable for a school events system; a missed email is worse.</li>
 </ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Worker runs this first, before hitting SMTP</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">notification_log</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">)</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="err">$</span><span class="n">registration_id</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;:&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="err">$</span><span class="n">event_type</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;processing&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">NOW</span><span class="p">())</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">notification_log</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">,</span><span class="w"> </span><span class="n">attempts</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="err">$</span><span class="n">registration_id</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;:&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="err">$</span><span class="n">event_type</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;processing&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">NOW</span><span class="p">())</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1">-- If 0 rows affected → skip. If 1 row inserted → proceed to send.</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1">-- 1 row affected → claimed, proceed to send.</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- 0 rows affected → SELECT status, attempts and branch as above.</span>
 </code></pre></div>
+<h3 id="76-retry-policy">7.6 Retry policy<a class="headerlink" href="#76-retry-policy" title="Permanent link">&para;</a></h3>
+<p>Delivery is retried on <strong>transient</strong> failures (SMTP connection error, 4xx greylisting, timeout) up to <strong>3 attempts</strong>, then parked as <code>failed</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Transient send failure, <code>attempts &lt; 3</code></td>
+<td>Increment <code>notification_log.attempts</code>; do <strong>not</strong> <code>XACK</code>. The message stays pending in the stream and <code>XAUTOCLAIM</code> (min-idle 5 min) redelivers it to a worker.</td>
+</tr>
+<tr>
+<td>Transient send failure, <code>attempts &gt;= 3</code></td>
+<td><code>UPDATE notification_log SET status='failed'</code>; <code>XACK</code> to stop redelivery.</td>
+</tr>
+<tr>
+<td>Permanent failure (e.g. 550 invalid recipient)</td>
+<td><code>UPDATE notification_log SET status='failed'</code> immediately; <code>XACK</code>. No retry — it can never succeed.</td>
+</tr>
+<tr>
+<td>Send success</td>
+<td><code>UPDATE notification_log SET status='completed'</code>; <code>XACK</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The 5-minute <code>XAUTOCLAIM</code> idle window provides natural spacing between attempts, so no explicit exponential backoff is needed at this scale. A <code>failed</code> row stays visible via <code>/notification-jobs</code> for manual inspection; automated dead-letter handling is out of scope.</p>
 <hr />
 <h2 id="9-rest-api-surface">9. REST API surface<a class="headerlink" href="#9-rest-api-surface" title="Permanent link">&para;</a></h2>
 <p>All protected routes require <code>Authorization: Bearer &lt;token&gt;</code>.</p>
@@ -1938,7 +2081,7 @@
 <td><code>POST</code></td>
 <td><code>/register</code></td>
 <td>Public</td>
-<td>Create student account (organizers seeded or created separately — document in README)</td>
+<td>Create student account (organizers via seed script — see README)</td>
 </tr>
 <tr>
 <td><code>POST</code></td>
@@ -2018,7 +2161,7 @@
 <td><code>DELETE</code></td>
 <td><code>/registrations/{id}</code></td>
 <td>Student (owner)</td>
-<td>Cancel own registration; promotes next waitlisted student</td>
+<td>Cancel own registration (allowed until event <code>starts_at</code>); promotes next waitlisted student</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
@@ -2087,6 +2230,31 @@
 <td><code>/users/me</code></td>
 <td>Both</td>
 <td>Update display name / email</td>
+</tr>
+</tbody>
+</table>
+<h3 id="operational">Operational<a class="headerlink" href="#operational" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/health</code></td>
+<td>Public</td>
+<td>Liveness — process is up. Returns <code>200</code> unconditionally.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/ready</code></td>
+<td>Public</td>
+<td>Readiness — checks Postgres and Redis connectivity. Returns <code>503</code> if a dependency is down.</td>
 </tr>
 </tbody>
 </table>
@@ -2263,53 +2431,58 @@
 <p>The confirmed seat count is used in the no-overbooking transaction and must always be read from Postgres under a lock. Caching it would silently break the overbooking guarantee.</p>
 </div>
 <hr />
-<h2 id="13-open-decisions">13. Open decisions<a class="headerlink" href="#13-open-decisions" title="Permanent link">&para;</a></h2>
-<p>These items are not yet finalized and require confirmation before implementation begins.</p>
+<h2 id="13-decisions">13. Decisions<a class="headerlink" href="#13-decisions" title="Permanent link">&para;</a></h2>
+<p>The following were open during the brainstorming session and have since been resolved by the team. They remain subject to mentor override.</p>
 <table>
 <thead>
 <tr>
 <th>#</th>
 <th>Decision</th>
-<th>Options</th>
-<th>Default if not discussed</th>
+<th>Resolution</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>1</td>
-<td>Does <code>ends_at</code> require a value, or is it nullable for single-datetime events?</td>
-<td>Nullable / Required</td>
-<td>Nullable</td>
+<td><code>ends_at</code> requirement</td>
+<td><strong>Nullable</strong> — supports single-datetime events; can be tightened later without a breaking change.</td>
 </tr>
 <tr>
 <td>2</td>
-<td>Can a student re-register for an event after cancelling?</td>
-<td>Yes (unique index allows it) / No (add hard block)</td>
-<td>Yes — allowed</td>
+<td>Re-register after cancelling</td>
+<td><strong>Allowed</strong> — the partial unique index already permits it; a hard block would add needless code.</td>
 </tr>
 <tr>
 <td>3</td>
-<td>Organizer creation: API endpoint vs seed script?</td>
-<td>Seed only / Admin endpoint</td>
-<td>Seed script, documented in README</td>
+<td>Organizer account creation</td>
+<td><strong>Seed script</strong> (documented in README). No public org-creation endpoint, avoiding a privilege-escalation surface.</td>
 </tr>
 <tr>
 <td>4</td>
-<td>Cancellation rule for students: always allowed, or only before <code>starts_at</code>?</td>
-<td>Always / Until start</td>
-<td>Until <code>starts_at</code></td>
-</tr>
-<tr>
-<td>5</td>
-<td>EventCancelled: one bulk job with <code>event_id</code>, or one job per registered user?</td>
-<td>Bulk / Per-user</td>
-<td>Bulk (worker queries affected users)</td>
+<td>Student cancellation window</td>
+<td><strong>Allowed until <code>starts_at</code></strong> (see §7). A later attempt returns <code>409 / event_already_started</code>.</td>
 </tr>
 <tr>
 <td>6</td>
-<td>Health/readiness endpoints (<code>/health</code>, <code>/ready</code>)?</td>
-<td>Implement / Skip</td>
-<td>Implement — low effort, strong demo story</td>
+<td>Health/readiness endpoints</td>
+<td><strong>Implemented</strong> — <code>/health</code> and <code>/ready</code> (see §9).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="stretch-feature-only-if-time-permits">Stretch feature (only if time permits)<a class="headerlink" href="#stretch-feature-only-if-time-permits" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Feature</th>
+<th>Plan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5</td>
+<td><code>EventCancelled</code> notifications</td>
+<td>A bonus domain event, built only if the schedule allows. Mechanism is already settled: one <strong>bulk</strong> job carrying <code>event_id</code>; the worker queries the affected registrations and sends one email per user.</td>
 </tr>
 </tbody>
 </table>
