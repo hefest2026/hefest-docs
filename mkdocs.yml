@@ -45,3 +45,5 @@ nav:
   - Home: index.md
   - Architecture:
       - Backend Design: superpowers/specs/2026-06-16-backend-architecture-design.md
+  - Criteria:
+      - Grading Criteria: criteria/grading-criteria.md

@@ -42,7 +42,7 @@ flowchart LR
     Relay -->|"XADD"| Redis[("Redis Streams")]
     Worker -->|"XREADGROUP / XACK"| Redis
     Worker -->|"UPDATE status, INSERT log"| PG
-    Worker -->|"SMTP"| Mail["Mailpit (dev)\nor real SMTP (prod)"]
+    Worker -->|"SMTP"| Mail["Mailpit (dev)\nResend (prod)"]
 ```
 
 | Process | Language | Responsibility |
@@ -69,13 +69,14 @@ The relay decouples the outbox-polling concern from the email-sending concern. T
 |---|---|---|
 | HTTP framework | FastAPI | Async, fast to build, native Pydantic integration |
 | ORM | Tortoise ORM | Async-native, fits FastAPI's async model |
-| Migrations | Aerich | Native Tortoise migration tool |
+| Migrations | Tortoise ORM built-in (`tortoise` CLI) | `makemigrations` / `migrate` / `downgrade` built into Tortoise ORM since v1.0; Aerich is no longer maintained |
 | Validation | Pydantic v2 | Request/response schemas, type-safe DTOs |
 | Auth | JWT (python-jose + passlib bcrypt) | Stateless, bcrypt for password hashing |
 | Database | PostgreSQL 16 | Relational, transactional, supports `FOR UPDATE` and partial indexes |
 | Queue | Redis 7 (Streams) | Low-latency async delivery; consumer groups for multi-worker load sharing |
 | Worker (C++) | hiredis · libpq · libcurl · nlohmann/json | Redis client, Postgres client, SMTP via libcurl, JSON parsing |
 | Dev email | Mailpit | Captures outbound email locally without a real SMTP account |
+| Prod email | Resend | Transactional email API for production; worker switches provider via `HEFEST_SMTP_*` env vars |
 | Containers | Docker + docker-compose | Single-command local setup |
 | Package manager | uv | Fast Python dependency resolution and virtual environment management |
 | Type checker | ty | Fast static type checking across the entire Python codebase |
@@ -117,7 +118,7 @@ hefest-api/          (Python)
 │   ├── services/        — business logic (registration, promotion, outbox)
 │   └── worker/
 │       └── relay.py     — outbox-to-Redis relay (separate process entrypoint)
-├── migrations/          — Aerich migration files
+├── migrations/          — Tortoise ORM migration files
 ├── tests/
 ├── Dockerfile
 └── docker-compose.yml   — composes api + relay + worker + postgres + redis + mailpit
@@ -134,11 +135,13 @@ hefest-worker/       (C++)
 ```
 
 !!! note "Schema ownership"
-    All database migrations live in `hefest-api`. The C++ worker connects to the same PostgreSQL database but **never runs migrations**. If you add a table or column, run `aerich migrate` in `hefest-api` first, then update the C++ code.
+    All database migrations live in `hefest-api`. The C++ worker connects to the same PostgreSQL database but **never runs migrations**. If you add a table or column, run `tortoise makemigrations && tortoise migrate` in `hefest-api` first, then update the C++ code.
 
 ---
 
 ## 6. Data model
+
+> **Covers:** [B2](../../criteria/grading-criteria.md#backend-30-points) — relational schema, migrations, uniqueness constraints, and partial indexes.
 
 ```mermaid
 erDiagram
@@ -241,12 +244,16 @@ CREATE INDEX idx_log_processing ON notification_log (idempotency_key) WHERE stat
 
 ## 7. Critical transactions
 
+> **Covers:** [F3](../../criteria/grading-criteria.md#functionality-40-points) · [CQ3](../../criteria/grading-criteria.md#code-quality-10-points) — the no-overbooking and promotion logic; the sequence diagrams and warning box below serve as the required documentation for non-obvious transactional logic.
+
 These two transactions are the core of the system's correctness guarantees.
 
 !!! warning "Tortoise ORM: `select_for_update()` must be inside an explicit transaction"
-    `FOR UPDATE` only holds a lock for the life of its transaction. In Tortoise, an `Events.select_for_update()` issued *outside* an `async with in_transaction() as conn:` block runs in autocommit mode — the lock is acquired and released the instant the statement finishes, silently defeating the overbooking guarantee below. Always wrap the lock + count + insert in a single `in_transaction()` context and pass that connection (`.using_db(conn)`) to every query in the block.
+    `FOR UPDATE` locks rows "until the end of the transaction" (confirmed against Tortoise ORM v1.x docs). Outside an explicit transaction, Tortoise runs in autocommit mode — the lock is acquired and released the instant the statement finishes, silently defeating the overbooking guarantee. Always wrap the lock + count + insert in a single `async with in_transaction() as conn:` block (or `@atomic()` decorator) and pass that connection (`.using_db(conn)`) to every query in the block.
 
 ### 6.1 Student registers for an event
+
+> **Covers:** [F3](../../criteria/grading-criteria.md#functionality-40-points) (overbooking prevention, CONFIRMED/WAITLISTED outcome) · [A1](../../criteria/grading-criteria.md#additional-features-25-points) (`RegistrationConfirmed` / `RegistrationWaitlisted` domain event inserted in same transaction)
 
 The challenge: two students can POST simultaneously. Without serialization, both could read "2 of 3 seats taken" and both get confirmed — creating 4 confirmed rows for a capacity-3 event (overbooking).
 
@@ -280,6 +287,8 @@ sequenceDiagram
 If the unique index fires (student already has an active registration for this event), Postgres raises an error and the transaction rolls back automatically. Return `409 Conflict` to the client.
 
 ### 6.2 Student cancels → automatic waitlist promotion
+
+> **Covers:** [F3](../../criteria/grading-criteria.md#functionality-40-points) (student cancellation rule + automatic FIFO promotion) · [A1](../../criteria/grading-criteria.md#additional-features-25-points) (`WaitlistPromoted` and `RegistrationCancelled` events)
 
 The seat freed by a cancellation must be assigned to the next waitlisted student **in the same transaction**. There must be no moment where the seat appears "free" without an owner.
 
@@ -315,6 +324,8 @@ If the cancelling student was **waitlisted** (not confirmed), no seat is freed a
 
 ### 6.3 Waitlist position (read-only)
 
+> **Covers:** [F3](../../criteria/grading-criteria.md#functionality-40-points) (waitlist position visible to student in `/registrations/me`) · [F4](../../criteria/grading-criteria.md#functionality-40-points) (waitlist size visible to organizer via `/events/{id}` counts) · [SC2](../../criteria/grading-criteria.md#scalability--design-15-points) (covered index avoids a sequential scan)
+
 The waitlist position shown to a student in `GET /registrations/me` is computed at read time — no stored integer that can drift under concurrent writes.
 
 ```sql
@@ -341,6 +352,8 @@ The `idx_registrations_waitlist_fifo` index covers the inner count query directl
 ---
 
 ## 8. Async notification pipeline
+
+> **Covers:** [B1](../../criteria/grading-criteria.md#backend-30-points) (separate worker process, producer/consumer separated) · [A1](../../criteria/grading-criteria.md#additional-features-25-points) (≥ 3 domain event types end-to-end) · [A2](../../criteria/grading-criteria.md#additional-features-25-points) (real email via Resend in prod + `notification_log` table) · [A3](../../criteria/grading-criteria.md#additional-features-25-points) (job states, retry policy, failure visibility) · [A4](../../criteria/grading-criteria.md#additional-features-25-points) (idempotency via `ON CONFLICT DO NOTHING` + unique key)
 
 ### 7.1 The dual-write problem
 
@@ -426,13 +439,13 @@ stateDiagram-v2
 
 All three below are mandatory (minimum for full points). The others are implemented as bonus.
 
-| Event type | Trigger | Mandatory |
-|---|---|---|
-| `RegistrationConfirmed` | Student registered, seat available | Yes |
-| `RegistrationWaitlisted` | Student registered, event full | Yes |
-| `WaitlistPromoted` | Confirmed registration cancelled, next student promoted | Yes |
-| `RegistrationCancelled` | Student cancels own registration | Bonus |
-| `EventCancelled` | Organizer cancels event (bulk job per registered user) | Bonus |
+| Event type | Trigger | Mandatory | Criteria |
+|---|---|---|---|
+| `RegistrationConfirmed` | Student registered, seat available | Yes | [A1](../../criteria/grading-criteria.md#additional-features-25-points) · [F3](../../criteria/grading-criteria.md#functionality-40-points) |
+| `RegistrationWaitlisted` | Student registered, event full | Yes | [A1](../../criteria/grading-criteria.md#additional-features-25-points) · [F3](../../criteria/grading-criteria.md#functionality-40-points) |
+| `WaitlistPromoted` | Confirmed registration cancelled, next student promoted | Yes | [A1](../../criteria/grading-criteria.md#additional-features-25-points) · [F3](../../criteria/grading-criteria.md#functionality-40-points) |
+| `RegistrationCancelled` | Student cancels own registration | Bonus | [A1](../../criteria/grading-criteria.md#additional-features-25-points) · [F3](../../criteria/grading-criteria.md#functionality-40-points) |
+| `EventCancelled` | Organizer cancels event (bulk job per registered user) | Bonus | [A1](../../criteria/grading-criteria.md#additional-features-25-points) · [F2](../../criteria/grading-criteria.md#functionality-40-points) |
 
 Example payload (ids only — worker loads names/emails from DB):
 
@@ -447,6 +460,8 @@ Example payload (ids only — worker loads names/emails from DB):
 ```
 
 ### 7.5 Idempotency strategy
+
+> **Covers:** [A4](../../criteria/grading-criteria.md#additional-features-25-points) — unique `idempotency_key` + `ON CONFLICT DO NOTHING` prevents duplicate emails on redelivery.
 
 Email delivery is **at-least-once** — the relay may re-publish a message if it crashes between the `XADD` and marking the job `published`. Redis may also redeliver an unacknowledged message via `XAUTOCLAIM`. To prevent duplicate emails, the worker classifies every message by the state of its `notification_log` row before sending:
 
@@ -468,6 +483,8 @@ ON CONFLICT (idempotency_key) DO NOTHING;
 
 ### 7.6 Retry policy
 
+> **Covers:** [A3](../../criteria/grading-criteria.md#additional-features-25-points) — `pending / processing / completed / failed` job states; max 3 attempts; failed rows visible via `/notification-jobs`.
+
 Delivery is retried on **transient** failures (SMTP connection error, 4xx greylisting, timeout) up to **3 attempts**, then parked as `failed`.
 
 | Condition | Action |
@@ -483,42 +500,44 @@ The 5-minute `XAUTOCLAIM` idle window provides natural spacing between attempts,
 
 ## 9. REST API surface
 
+> **Covers:** [B3](../../criteria/grading-criteria.md#backend-30-points) · [R1](../../criteria/grading-criteria.md#rest-endpoints-10-points) · [S3](../../criteria/grading-criteria.md#security-15-points) — complete REST surface with role enforcement; each table notes additional criteria per endpoint.
+
 All protected routes require `Authorization: Bearer <token>`.
 
 ### Authentication
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `POST` | `/register` | Public | Create student account (organizers via seed script — see README) |
-| `POST` | `/login` | Public | Returns JWT |
+| Method | Path | Role | Description | Criteria |
+|---|---|---|---|---|
+| `POST` | `/register` | Public | Create student account (organizers via seed script — see README) | [F1](../../criteria/grading-criteria.md#functionality-40-points) · [S1](../../criteria/grading-criteria.md#security-15-points) · [S2](../../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/login` | Public | Returns JWT | [F1](../../criteria/grading-criteria.md#functionality-40-points) · [S1](../../criteria/grading-criteria.md#security-15-points) |
 
 ### Events
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `POST` | `/events` | Organizer | Create event in DRAFT |
-| `GET` | `/events` | Both | Students: published only. Organizers: own drafts + published |
-| `GET` | `/events/{id}` | Both | Event details + confirmed count + capacity + waitlist size |
-| `PUT` | `/events/{id}` | Organizer (owner) | Edit event (only if still in DRAFT) |
-| `POST` | `/events/{id}/publish` | Organizer (owner) | DRAFT → PUBLISHED |
-| `POST` | `/events/{id}/cancel` | Organizer (owner) | Cancel event; document behavior for existing registrations |
+| Method | Path | Role | Description | Criteria |
+|---|---|---|---|---|
+| `POST` | `/events` | Organizer | Create event in DRAFT | [F2](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `GET` | `/events` | Both | Students: published only. Organizers: own drafts + published | [F2](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `GET` | `/events/{id}` | Both | Event details + confirmed count + capacity + waitlist size | [F2](../../criteria/grading-criteria.md#functionality-40-points) · [F4](../../criteria/grading-criteria.md#functionality-40-points) |
+| `PUT` | `/events/{id}` | Organizer (owner) | Edit event (only if still in DRAFT) | [F2](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/events/{id}/publish` | Organizer (owner) | DRAFT → PUBLISHED | [F2](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/events/{id}/cancel` | Organizer (owner) | Cancel event; document behavior for existing registrations | [F2](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
 
 ### Registrations
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `POST` | `/events/{id}/registrations` | Student | Register → CONFIRMED or WAITLISTED |
-| `DELETE` | `/registrations/{id}` | Student (owner) | Cancel own registration (allowed until event `starts_at`); promotes next waitlisted student |
-| `GET` | `/registrations/me` | Student | Own registrations + status + waitlist position |
-| `GET` | `/events/{id}/registrations` | Organizer (owner) | Confirmed registrations for own event |
-| `GET` | `/events/{id}/waitlist` | Organizer (owner) | Ordered waitlist (FIFO) for own event |
+| Method | Path | Role | Description | Criteria |
+|---|---|---|---|---|
+| `POST` | `/events/{id}/registrations` | Student | Register → CONFIRMED or WAITLISTED | [F3](../../criteria/grading-criteria.md#functionality-40-points) · [A1](../../criteria/grading-criteria.md#additional-features-25-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `DELETE` | `/registrations/{id}` | Student (owner) | Cancel own registration (allowed until event `starts_at`); promotes next waitlisted student | [F3](../../criteria/grading-criteria.md#functionality-40-points) · [A1](../../criteria/grading-criteria.md#additional-features-25-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `GET` | `/registrations/me` | Student | Own registrations + status + waitlist position | [F3](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `GET` | `/events/{id}/registrations` | Organizer (owner) | Confirmed registrations for own event | [F4](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
+| `GET` | `/events/{id}/waitlist` | Organizer (owner) | Ordered waitlist (FIFO) for own event | [F4](../../criteria/grading-criteria.md#functionality-40-points) · [S3](../../criteria/grading-criteria.md#security-15-points) |
 
 ### Notification jobs (optional endpoints — owned by C++ worker service)
 
-| Method | Path | Role | Description |
-|---|---|---|---|
-| `GET` | `/notification-jobs` | Organizer | List jobs for own events (filter by `event_id`) |
-| `GET` | `/notification-jobs/{id}` | Organizer | Single job detail |
+| Method | Path | Role | Description | Criteria |
+|---|---|---|---|---|
+| `GET` | `/notification-jobs` | Organizer | List jobs for own events (filter by `event_id`) | [A2](../../criteria/grading-criteria.md#additional-features-25-points) · [A3](../../criteria/grading-criteria.md#additional-features-25-points) |
+| `GET` | `/notification-jobs/{id}` | Organizer | Single job detail | [A2](../../criteria/grading-criteria.md#additional-features-25-points) · [A3](../../criteria/grading-criteria.md#additional-features-25-points) |
 
 ### Profile (optional)
 
@@ -548,6 +567,8 @@ All error responses follow a consistent envelope:
 ---
 
 ## 10. Rate limiting
+
+> **Covers:** [S2](../../criteria/grading-criteria.md#security-15-points) — protects `/login` and `/register` against brute-force and account-creation spam; uses Redis already in the stack (no extra infra).
 
 Rate limiting protects the API against brute-force attacks and abuse. Redis is already in the stack for the notification pipeline, making it the natural choice — no extra infrastructure required.
 
@@ -670,6 +691,8 @@ Scaling levers available by design:
 
 ## 12. Scalability notes
 
+> **Covers:** [SC1](../../criteria/grading-criteria.md#scalability--design-15-points) · [SC2](../../criteria/grading-criteria.md#scalability--design-15-points) · [SC3](../../criteria/grading-criteria.md#scalability--design-15-points) — the table below maps each scalability concern to the current approach and the documented scaling path.
+
 The current design was intentionally kept minimal (Postgres outbox + Redis Streams rather than a dedicated message broker like RabbitMQ or Kafka). This is sufficient for school-event scale and keeps the demo simple. The design documents the scaling path without requiring it to be built:
 
 | Concern | Current approach | Scaling path |
@@ -678,7 +701,7 @@ The current design was intentionally kept minimal (Postgres outbox + Redis Strea
 | Worker parallelism | Single worker process | Redis consumer groups → add worker replicas |
 | Read throughput | Postgres with covering indexes | Add read replicas; cache static event metadata (not counts) |
 | Registration hotspot | Row-level lock on event | Advisory lock per event_id for even lower contention at scale |
-| Notifications | At-least-once SMTP | Add a dedicated transactional email provider (Postmark, SendGrid) |
+| Notifications | At-least-once SMTP | Switch worker to Resend (already in production stack) for higher deliverability and send-rate limits |
 
 !!! warning "Do not cache registration counts"
     The confirmed seat count is used in the no-overbooking transaction and must always be read from Postgres under a lock. Caching it would silently break the overbooking guarantee.
