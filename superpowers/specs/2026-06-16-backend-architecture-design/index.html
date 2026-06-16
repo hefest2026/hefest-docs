@@ -1,0 +1,2374 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Architecture and development documentation for the Hefest school event management platform, built for AIBEST 2026 Burgas.">
+      
+      
+      
+      
+        <link rel="prev" href="../../..">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Backend Design - Hefest — School Events System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#backend-architecture-design" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Hefest — School Events System" class="md-header__button md-logo" aria-label="Hefest — School Events System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Hefest — School Events System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Backend Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/hefest2026/hefest-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Hefest — School Events System" class="md-nav__button md-logo" aria-label="Hefest — School Events System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Hefest — School Events System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/hefest2026/hefest-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend Design
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-we-are-building" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What we are building
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-system-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. System topology
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. System topology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-two-repos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why two repos?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-three-processes-not-two" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why three processes, not two?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-technology-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Technology stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Naming conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-repository-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Repository structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-data-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Data model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Data model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key constraints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indexes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-critical-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Critical transactions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Critical transactions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-student-registers-for-an-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Student registers for an event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-student-cancels-automatic-waitlist-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Student cancels → automatic waitlist promotion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-waitlist-position-read-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Waitlist position (read-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-async-notification-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Async notification pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Async notification pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-the-dual-write-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 The dual-write problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-full-pipeline-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Full pipeline flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-job-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Job state machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-domain-event-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Domain event types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75-idempotency-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 Idempotency strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-rest-api-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. REST API surface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. REST API surface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registrations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notification-jobs-optional-endpoints-owned-by-c-worker-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notification jobs (optional endpoints — owned by C++ worker service)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profile-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profile (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Rate limiting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Rate limiting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strategy-sliding-window-with-redis-sorted-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy: sliding window with Redis sorted sets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limits-per-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits per endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-development-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local development (docker-compose)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-path-helm-appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production path (Helm — appendix)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-scalability-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Scalability notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-open-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Open decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-we-are-building" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What we are building
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-system-topology" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. System topology
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. System topology">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-two-repos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why two repos?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-three-processes-not-two" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why three processes, not two?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-technology-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Technology stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Naming conventions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-repository-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Repository structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-data-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Data model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Data model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key constraints
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#indexes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Indexes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-critical-transactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Critical transactions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. Critical transactions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-student-registers-for-an-event" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 Student registers for an event
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-student-cancels-automatic-waitlist-promotion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 Student cancels → automatic waitlist promotion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-waitlist-position-read-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 Waitlist position (read-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-async-notification-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Async notification pipeline
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. Async notification pipeline">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71-the-dual-write-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 The dual-write problem
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72-full-pipeline-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 Full pipeline flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73-job-state-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 Job state machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74-domain-event-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 Domain event types
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75-idempotency-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 Idempotency strategy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-rest-api-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. REST API surface
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. REST API surface">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#events" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Events
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#registrations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Registrations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notification-jobs-optional-endpoints-owned-by-c-worker-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notification jobs (optional endpoints — owned by C++ worker service)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#profile-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profile (optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-rate-limiting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Rate limiting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Rate limiting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#strategy-sliding-window-with-redis-sorted-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Strategy: sliding window with Redis sorted sets
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limits-per-endpoint" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits per endpoint
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#http-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTP response
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementation-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation approach
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. Deployment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. Deployment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-development-docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local development (docker-compose)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#production-path-helm-appendix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production path (Helm — appendix)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-scalability-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. Scalability notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-open-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. Open decisions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="backend-architecture-design">Backend Architecture Design<a class="headerlink" href="#backend-architecture-design" title="Permanent link">&para;</a></h1>
+<p><strong>Project:</strong> School Events &amp; Notification Center — AIBEST 2026 Burgas
+<strong>Status:</strong> Draft — pending mentor review
+<strong>Date:</strong> 2026-06-16
+<strong>Backend lead:</strong> TBD
+<strong>Stack:</strong> Python 3.12 · FastAPI · Tortoise ORM · PostgreSQL 16 · Redis 7 · C++ (worker)</p>
+<hr />
+<h2 id="1-what-we-are-building">1. What we are building<a class="headerlink" href="#1-what-we-are-building" title="Permanent link">&para;</a></h2>
+<p>A backend for a school event management system. The system has two user roles: <strong>students</strong>, who browse and register for events, and <strong>organizers</strong>, who create and publish events and manage registrations.</p>
+<p>The backend has two core responsibilities:</p>
+<ol>
+<li><strong>A REST API</strong> that handles authentication, event management, and registrations — and must return fast, even when a student registers for a fully-booked event and needs to be waitlisted.</li>
+<li><strong>An async notification pipeline</strong> that sends emails <em>after</em> the API has responded, without blocking the HTTP request. This is the event-driven part of the system.</li>
+</ol>
+<hr />
+<h2 id="2-system-topology">2. System topology<a class="headerlink" href="#2-system-topology" title="Permanent link">&para;</a></h2>
+<p>The backend runs as <strong>three separate processes</strong> that share one PostgreSQL database and communicate through Redis Streams. Each process has a single, clear responsibility.</p>
+<pre class="mermaid"><code>flowchart LR
+    Client["Student / Organizer\n(browser or API client)"]
+
+    subgraph api_repo["hefest-api  (Python · one Docker image)"]
+        API["api\nFastAPI HTTP server"]
+        Relay["relay\noutbox-to-streams bridge"]
+    end
+
+    subgraph worker_repo["hefest-worker  (C++)"]
+        Worker["worker\nstream consumer + SMTP sender"]
+    end
+
+    Client --&gt;|"HTTP/JSON + JWT"| API
+    API --&gt;|"BEGIN … COMMIT\n(registration + outbox row)"| PG[("PostgreSQL")]
+    Relay --&gt;|"poll pending rows"| PG
+    Relay --&gt;|"XADD"| Redis[("Redis Streams")]
+    Worker --&gt;|"XREADGROUP / XACK"| Redis
+    Worker --&gt;|"UPDATE status, INSERT log"| PG
+    Worker --&gt;|"SMTP"| Mail["Mailpit (dev)\nor real SMTP (prod)"]</code></pre>
+<table>
+<thead>
+<tr>
+<th>Process</th>
+<th>Language</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>api</code></td>
+<td>Python</td>
+<td>Handle HTTP requests, enforce auth/roles, run business transactions</td>
+</tr>
+<tr>
+<td><code>relay</code></td>
+<td>Python</td>
+<td>Bridge: read pending outbox rows → publish to Redis Streams</td>
+</tr>
+<tr>
+<td><code>worker</code></td>
+<td>C++</td>
+<td>Consume Redis Streams → send email → write delivery log</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>api</code> and <code>relay</code> live in the same Python repo and share the same Docker image (different entrypoints). The <code>worker</code> is a separate C++ repo and Docker image. They are composed together via <code>docker-compose</code>.</p>
+<h3 id="why-two-repos">Why two repos?<a class="headerlink" href="#why-two-repos" title="Permanent link">&para;</a></h3>
+<p>The team has two backend developers with different primary languages (Python and C++). The Redis Streams message format is language-agnostic JSON, making it a clean interface boundary between the two repos. Each developer owns their repo end-to-end.</p>
+<h3 id="why-three-processes-not-two">Why three processes, not two?<a class="headerlink" href="#why-three-processes-not-two" title="Permanent link">&para;</a></h3>
+<p>The relay decouples the outbox-polling concern from the email-sending concern. The API writes to Postgres; the relay bridges Postgres to Redis; the worker consumes Redis. Each process can be scaled and replaced independently. This also keeps the C++ worker simple: it only needs to know how to read from Redis and send email — not how to query a polling loop against Postgres.</p>
+<hr />
+<h2 id="3-technology-stack">3. Technology stack<a class="headerlink" href="#3-technology-stack" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Tool</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP framework</td>
+<td>FastAPI</td>
+<td>Async, fast to build, native Pydantic integration</td>
+</tr>
+<tr>
+<td>ORM</td>
+<td>Tortoise ORM</td>
+<td>Async-native, fits FastAPI's async model</td>
+</tr>
+<tr>
+<td>Migrations</td>
+<td>Aerich</td>
+<td>Native Tortoise migration tool</td>
+</tr>
+<tr>
+<td>Validation</td>
+<td>Pydantic v2</td>
+<td>Request/response schemas, type-safe DTOs</td>
+</tr>
+<tr>
+<td>Auth</td>
+<td>JWT (python-jose + passlib bcrypt)</td>
+<td>Stateless, bcrypt for password hashing</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>PostgreSQL 16</td>
+<td>Relational, transactional, supports <code>FOR UPDATE</code> and partial indexes</td>
+</tr>
+<tr>
+<td>Queue</td>
+<td>Redis 7 (Streams)</td>
+<td>Low-latency async delivery; consumer groups for multi-worker load sharing</td>
+</tr>
+<tr>
+<td>Worker (C++)</td>
+<td>hiredis · libpq · libcurl · nlohmann/json</td>
+<td>Redis client, Postgres client, SMTP via libcurl, JSON parsing</td>
+</tr>
+<tr>
+<td>Dev email</td>
+<td>Mailpit</td>
+<td>Captures outbound email locally without a real SMTP account</td>
+</tr>
+<tr>
+<td>Containers</td>
+<td>Docker + docker-compose</td>
+<td>Single-command local setup</td>
+</tr>
+<tr>
+<td>Package manager</td>
+<td>uv</td>
+<td>Fast Python dependency resolution and virtual environment management</td>
+</tr>
+<tr>
+<td>Type checker</td>
+<td>ty</td>
+<td>Fast static type checking across the entire Python codebase</td>
+</tr>
+<tr>
+<td>Linter / formatter</td>
+<td>Ruff</td>
+<td>Formatting and linting (replaces black, isort, flake8); clang-format for C++</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-naming-conventions">4. Naming conventions<a class="headerlink" href="#4-naming-conventions" title="Permanent link">&para;</a></h2>
+<p><strong>Hefest</strong> is the codename for this project, used as a consistent prefix across every named artifact — repositories, services, containers, environment variables, and infrastructure resources. This makes it immediately clear what belongs to this project and avoids collisions in shared environments.</p>
+<table>
+<thead>
+<tr>
+<th>Artifact</th>
+<th>Pattern</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Repositories</td>
+<td><code>hefest-&lt;role&gt;</code></td>
+<td><code>hefest-api</code>, <code>hefest-worker</code>, <code>hefest-docs</code></td>
+</tr>
+<tr>
+<td>Docker images</td>
+<td><code>hefest-&lt;role&gt;</code></td>
+<td><code>hefest-api</code>, <code>hefest-worker</code></td>
+</tr>
+<tr>
+<td>Compose services</td>
+<td><code>hefest-&lt;role&gt;</code></td>
+<td><code>hefest-api</code>, <code>hefest-relay</code>, <code>hefest-worker</code>, <code>hefest-db</code>, <code>hefest-redis</code>, <code>hefest-mail</code></td>
+</tr>
+<tr>
+<td>Container names</td>
+<td><code>hefest-&lt;role&gt;</code></td>
+<td>same as compose service names</td>
+</tr>
+<tr>
+<td>Database name</td>
+<td><code>hefest_db</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Redis stream</td>
+<td><code>hefest:notifications</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Redis key prefix</td>
+<td><code>hefest:</code></td>
+<td><code>hefest:some-key</code></td>
+</tr>
+<tr>
+<td>Environment variables</td>
+<td><code>HEFEST_&lt;NAME&gt;</code></td>
+<td><code>HEFEST_DB_URL</code>, <code>HEFEST_JWT_SECRET</code></td>
+</tr>
+<tr>
+<td>Python package</td>
+<td><code>hefest</code></td>
+<td><code>from hefest.models import Event</code></td>
+</tr>
+<tr>
+<td>JWT issuer claim</td>
+<td><code>hefest</code></td>
+<td><code>{"iss": "hefest", ...}</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>hefest-docs</code> repository (this site) follows the same convention and is the central reference for architecture decisions across all <code>hefest-*</code> repos.</p>
+<hr />
+<h2 id="5-repository-structure">5. Repository structure<a class="headerlink" href="#5-repository-structure" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>hefest-api/          (Python)
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── app/
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   ├── main.py          — FastAPI application entrypoint
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>│   ├── config.py        — settings (env vars via pydantic-settings)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── models/          — Tortoise ORM models
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   ├── schemas/         — Pydantic request/response schemas
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── routers/         — one file per resource (auth, events, registrations, users)
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── services/        — business logic (registration, promotion, outbox)
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   └── worker/
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│       └── relay.py     — outbox-to-Redis relay (separate process entrypoint)
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>├── migrations/          — Aerich migration files
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>├── tests/
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>├── Dockerfile
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>└── docker-compose.yml   — composes api + relay + worker + postgres + redis + mailpit
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>hefest-worker/       (C++)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>├── src/
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│   ├── main.cpp         — process entrypoint
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>│   ├── consumer.cpp/h   — Redis Streams XREADGROUP loop
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>│   ├── mailer.cpp/h     — SMTP via libcurl
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>│   ├── db.cpp/h         — libpq for notification_log writes
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>│   └── message.cpp/h    — JSON parsing (nlohmann/json)
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>├── CMakeLists.txt
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>└── Dockerfile
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Schema ownership</p>
+<p>All database migrations live in <code>hefest-api</code>. The C++ worker connects to the same PostgreSQL database but <strong>never runs migrations</strong>. If you add a table or column, run <code>aerich migrate</code> in <code>hefest-api</code> first, then update the C++ code.</p>
+</div>
+<hr />
+<h2 id="6-data-model">6. Data model<a class="headerlink" href="#6-data-model" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>erDiagram
+    users {
+        uuid id PK
+        text email UK
+        text password_hash
+        text full_name
+        text role "student | organizer"
+        timestamptz created_at
+    }
+    events {
+        uuid id PK
+        uuid organizer_id FK
+        text title
+        text description
+        timestamptz starts_at
+        timestamptz ends_at
+        text location
+        int capacity
+        text status "draft | published | cancelled"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    registrations {
+        uuid id PK
+        uuid event_id FK
+        uuid student_id FK
+        text status "confirmed | waitlisted | cancelled"
+        timestamptz registered_at
+        timestamptz cancelled_at
+    }
+    notification_jobs {
+        uuid id PK
+        text event_type
+        jsonb payload
+        text status "pending | published | processing | sent | failed"
+        int attempts
+        text idempotency_key UK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    notification_log {
+        uuid id PK
+        text idempotency_key UK
+        text status "processing | completed | failed"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    users ||--o{ events : "organizes"
+    users ||--o{ registrations : "makes"
+    events ||--o{ registrations : "has"
+    events ||--o{ notification_jobs : "triggers"</code></pre>
+<h3 id="key-constraints">Key constraints<a class="headerlink" href="#key-constraints" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">-- One active registration per student per event.</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1">-- &#39;cancelled&#39; rows are excluded so a student may re-register after cancelling.</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">uq_one_active_registration_per_student</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">registrations</span><span class="w"> </span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span><span class="w"> </span><span class="n">student_id</span><span class="p">)</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;confirmed&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;waitlisted&#39;</span><span class="p">);</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1">-- Idempotency: a job type can only be delivered once per registration.</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="c1">-- Enforced at the DB level as a backstop behind the application check.</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">notification_log</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">    </span><span class="k">ADD</span><span class="w"> </span><span class="k">CONSTRAINT</span><span class="w"> </span><span class="n">uq_notification_log_key</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">);</span>
+</code></pre></div>
+<h3 id="indexes">Indexes<a class="headerlink" href="#indexes" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1">-- Fast published event listing (students)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_events_published</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">events</span><span class="w"> </span><span class="p">(</span><span class="n">status</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;published&#39;</span><span class="p">;</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1">-- Fast organizer event lookup</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_events_organizer</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">events</span><span class="w"> </span><span class="p">(</span><span class="n">organizer_id</span><span class="p">);</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1">-- Confirmed seat count (used in every registration transaction)</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_registrations_event_status</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">registrations</span><span class="w"> </span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">);</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="c1">-- FIFO waitlist ordering for promotion and position queries</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_registrations_waitlist_fifo</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">registrations</span><span class="w"> </span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span><span class="w"> </span><span class="n">registered_at</span><span class="p">)</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;waitlisted&#39;</span><span class="p">;</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="c1">-- Student&#39;s own registrations (/registrations/me)</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_registrations_student</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">registrations</span><span class="w"> </span><span class="p">(</span><span class="n">student_id</span><span class="p">);</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="c1">-- Relay polling: only scan pending rows, not the full historical table</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_jobs_pending</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">notification_jobs</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;pending&#39;</span><span class="p">;</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="c1">-- Stale-job reclaim: find stuck &#39;processing&#39; rows</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_jobs_processing</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">notification_jobs</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;processing&#39;</span><span class="p">;</span>
+</code></pre></div>
+<hr />
+<h2 id="7-critical-transactions">7. Critical transactions<a class="headerlink" href="#7-critical-transactions" title="Permanent link">&para;</a></h2>
+<p>These two transactions are the core of the system's correctness guarantees.</p>
+<h3 id="61-student-registers-for-an-event">6.1 Student registers for an event<a class="headerlink" href="#61-student-registers-for-an-event" title="Permanent link">&para;</a></h3>
+<p>The challenge: two students can POST simultaneously. Without serialization, both could read "2 of 3 seats taken" and both get confirmed — creating 4 confirmed rows for a capacity-3 event (overbooking).</p>
+<p>The fix: lock the event row at the start of the transaction. Any concurrent registration for the same event blocks at that lock until the first transaction commits.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant Client
+    participant API
+    participant PG as PostgreSQL
+
+    Client-&gt;&gt;API: POST /events/{id}/registrations
+    API-&gt;&gt;PG: BEGIN
+    API-&gt;&gt;PG: SELECT id, capacity, status FROM events WHERE id=? FOR UPDATE
+    Note over PG: Concurrent registrations for this event block here
+    API-&gt;&gt;PG: SELECT COUNT(*) FROM registrations WHERE event_id=? AND status='confirmed'
+    alt count &lt; capacity
+        API-&gt;&gt;PG: INSERT registration (status='confirmed')
+        API-&gt;&gt;PG: INSERT notification_jobs (type='RegistrationConfirmed', status='pending')
+    else count &gt;= capacity
+        API-&gt;&gt;PG: INSERT registration (status='waitlisted')
+        API-&gt;&gt;PG: INSERT notification_jobs (type='RegistrationWaitlisted', status='pending')
+    end
+    API-&gt;&gt;PG: COMMIT
+    API--&gt;&gt;Client: 201 Created (returns immediately — no email sent yet)</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Why lock the event row, not the registrations table?</p>
+<p>You cannot lock a <code>COUNT()</code> — it is a derived value. Locking the single, always-present event row is the standard pattern. The lock is held only for the duration of one count query and one insert (microseconds), so throughput at school-event scale is not affected.</p>
+</div>
+<p>If the unique index fires (student already has an active registration for this event), Postgres raises an error and the transaction rolls back automatically. Return <code>409 Conflict</code> to the client.</p>
+<h3 id="62-student-cancels-automatic-waitlist-promotion">6.2 Student cancels → automatic waitlist promotion<a class="headerlink" href="#62-student-cancels-automatic-waitlist-promotion" title="Permanent link">&para;</a></h3>
+<p>The seat freed by a cancellation must be assigned to the next waitlisted student <strong>in the same transaction</strong>. There must be no moment where the seat appears "free" without an owner.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant Client
+    participant API
+    participant PG as PostgreSQL
+
+    Client-&gt;&gt;API: DELETE /registrations/{id}
+    API-&gt;&gt;PG: BEGIN
+    API-&gt;&gt;PG: SELECT capacity FROM events WHERE id=? FOR UPDATE
+    Note over PG: Serializes concurrent cancellations for the same event
+    API-&gt;&gt;PG: UPDATE registrations SET status='cancelled', cancelled_at=NOW() WHERE id=? AND student_id=?
+    API-&gt;&gt;PG: SELECT id FROM registrations WHERE event_id=? AND status='waitlisted' ORDER BY registered_at ASC LIMIT 1
+    alt waitlist not empty
+        API-&gt;&gt;PG: UPDATE registrations SET status='confirmed' WHERE id=?
+        API-&gt;&gt;PG: INSERT notification_jobs (type='WaitlistPromoted', status='pending')
+    end
+    API-&gt;&gt;PG: INSERT notification_jobs (type='RegistrationCancelled', status='pending')
+    API-&gt;&gt;PG: COMMIT
+    API--&gt;&gt;Client: 200 OK</code></pre>
+<p>If the cancelling student was <strong>waitlisted</strong> (not confirmed), no seat is freed and the promotion step is skipped. This is a separate code path with the same transaction structure.</p>
+<h3 id="63-waitlist-position-read-only">6.3 Waitlist position (read-only)<a class="headerlink" href="#63-waitlist-position-read-only" title="Permanent link">&para;</a></h3>
+<p>The waitlist position shown to a student in <code>GET /registrations/me</code> is computed at read time — no stored integer that can drift under concurrent writes.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">-- For /registrations/me: student is waitlisted across multiple events</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">SELECT</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">event_id</span><span class="p">,</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">status</span><span class="p">,</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">registered_at</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="p">(</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">        </span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="k">FROM</span><span class="w"> </span><span class="n">registrations</span><span class="w"> </span><span class="n">r2</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">        </span><span class="k">WHERE</span><span class="w"> </span><span class="n">r2</span><span class="p">.</span><span class="n">event_id</span><span class="w">    </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">event_id</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">          </span><span class="k">AND</span><span class="w"> </span><span class="n">r2</span><span class="p">.</span><span class="n">status</span><span class="w">      </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;waitlisted&#39;</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">          </span><span class="k">AND</span><span class="w"> </span><span class="n">r2</span><span class="p">.</span><span class="n">registered_at</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">registered_at</span><span class="w">  </span><span class="c1">-- how many are ahead of me</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">waitlist_position</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="k">FROM</span><span class="w"> </span><span class="n">registrations</span><span class="w"> </span><span class="n">r</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="k">WHERE</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">student_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="err">$</span><span class="n">current_user_id</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">status</span><span class="w">     </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;waitlisted&#39;</span><span class="p">;</span>
+</code></pre></div>
+<p>The <code>idx_registrations_waitlist_fifo</code> index covers the inner count query directly.</p>
+<hr />
+<h2 id="8-async-notification-pipeline">8. Async notification pipeline<a class="headerlink" href="#8-async-notification-pipeline" title="Permanent link">&para;</a></h2>
+<h3 id="71-the-dual-write-problem">7.1 The dual-write problem<a class="headerlink" href="#71-the-dual-write-problem" title="Permanent link">&para;</a></h3>
+<p>When a registration is saved, two things must happen: record it in the database and enqueue a notification job. If these go to two different systems (e.g., Postgres + RabbitMQ), a process crash between the two writes can lose the event permanently.</p>
+<p><strong>Solution:</strong> the notification job is a row in the <em>same</em> Postgres database, inserted in the <em>same</em> transaction as the registration. Both writes succeed or both roll back — atomically. This pattern is called the <strong>transactional outbox</strong>.</p>
+<h3 id="72-full-pipeline-flow">7.2 Full pipeline flow<a class="headerlink" href="#72-full-pipeline-flow" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant API
+    participant PG as PostgreSQL (notification_jobs)
+    participant Relay as Relay (Python)
+    participant Redis as Redis Streams
+    participant Worker as Worker (C++)
+    participant Log as notification_log
+    participant SMTP
+
+    Note over API,PG: Step 1 — API commits registration + outbox row together
+    API-&gt;&gt;PG: COMMIT (registration + notification_jobs row, status='pending')
+
+    Note over Relay,PG: Step 2 — Relay bridges outbox to Redis
+    loop every ~1 second
+        Relay-&gt;&gt;PG: SELECT pending rows FOR UPDATE SKIP LOCKED
+        PG--&gt;&gt;Relay: pending job(s)
+        Relay-&gt;&gt;Redis: XADD (JSON message with ids and event type)
+        Relay-&gt;&gt;PG: UPDATE status='published'
+    end
+
+    Note over Worker,SMTP: Step 3 — Worker delivers
+    loop blocking on stream
+        Worker-&gt;&gt;Redis: XREADGROUP (blocks until message arrives)
+        Redis--&gt;&gt;Worker: message
+        Worker-&gt;&gt;Log: INSERT (idempotency_key, status='processing') ON CONFLICT DO NOTHING
+        alt claimed — this worker will send
+            Worker-&gt;&gt;PG: SELECT user email by id (never trust payload for PII)
+            Worker-&gt;&gt;SMTP: send email
+            Worker-&gt;&gt;Log: UPDATE status='completed'
+            Worker-&gt;&gt;Redis: XACK
+        else already claimed by another worker — skip
+            Worker-&gt;&gt;Redis: XACK
+        end
+    end</code></pre>
+<h3 id="73-job-state-machine">7.3 Job state machine<a class="headerlink" href="#73-job-state-machine" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; pending : API commits transaction
+    pending --&gt; published : Relay reads and XADDs to Redis
+    published --&gt; processing : Worker claims via ON CONFLICT DO NOTHING
+    processing --&gt; completed : Email sent successfully
+    processing --&gt; failed : Max attempts exceeded
+    failed --&gt; [*]
+    completed --&gt; [*]</code></pre>
+<h3 id="74-domain-event-types">7.4 Domain event types<a class="headerlink" href="#74-domain-event-types" title="Permanent link">&para;</a></h3>
+<p>All three below are mandatory (minimum for full points). The others are implemented as bonus.</p>
+<table>
+<thead>
+<tr>
+<th>Event type</th>
+<th>Trigger</th>
+<th>Mandatory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RegistrationConfirmed</code></td>
+<td>Student registered, seat available</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>RegistrationWaitlisted</code></td>
+<td>Student registered, event full</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>WaitlistPromoted</code></td>
+<td>Confirmed registration cancelled, next student promoted</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>RegistrationCancelled</code></td>
+<td>Student cancels own registration</td>
+<td>Bonus</td>
+</tr>
+<tr>
+<td><code>EventCancelled</code></td>
+<td>Organizer cancels event (bulk job per registered user)</td>
+<td>Bonus</td>
+</tr>
+</tbody>
+</table>
+<p>Example payload (ids only — worker loads names/emails from DB):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;RegistrationConfirmed&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">&quot;event_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">&quot;user_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;6ba7b810-9dad-11d1-80b4-00c04fd430c8&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="nt">&quot;registration_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;6ba7b811-9dad-11d1-80b4-00c04fd430c8&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">&quot;occurred_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-06-16T14:00:00Z&quot;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="75-idempotency-strategy">7.5 Idempotency strategy<a class="headerlink" href="#75-idempotency-strategy" title="Permanent link">&para;</a></h3>
+<p>Email delivery is <strong>at-least-once</strong> — the relay may re-publish a message if it crashes between the <code>XADD</code> and marking the job <code>published</code>. Redis may also redeliver an unacknowledged message via <code>XAUTOCLAIM</code>. To prevent duplicate emails:</p>
+<ol>
+<li><strong>Claim before sending:</strong> the worker inserts a <code>notification_log</code> row with <code>status='processing'</code> using <code>ON CONFLICT DO NOTHING</code> <em>before</em> touching SMTP. Only the worker that successfully inserts proceeds.</li>
+<li><strong>If two workers race:</strong> only one insert succeeds; the other sees 0 rows affected and skips.</li>
+<li><strong>If a worker crashes after sending but before XACK:</strong> <code>XAUTOCLAIM</code> (timeout: 5 minutes) redelivers to another worker, which finds the log row in <code>completed</code> or <code>processing</code> state and skips. Worst case: a second email is sent — tolerable for a school events system; a missed email is worse.</li>
+</ol>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">-- Worker runs this first, before hitting SMTP</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">notification_log</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">,</span><span class="w"> </span><span class="n">created_at</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="err">$</span><span class="n">registration_id</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;:&#39;</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="err">$</span><span class="n">event_type</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;processing&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">NOW</span><span class="p">())</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="k">ON</span><span class="w"> </span><span class="n">CONFLICT</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">)</span><span class="w"> </span><span class="k">DO</span><span class="w"> </span><span class="k">NOTHING</span><span class="p">;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1">-- If 0 rows affected → skip. If 1 row inserted → proceed to send.</span>
+</code></pre></div>
+<hr />
+<h2 id="9-rest-api-surface">9. REST API surface<a class="headerlink" href="#9-rest-api-surface" title="Permanent link">&para;</a></h2>
+<p>All protected routes require <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>/register</code></td>
+<td>Public</td>
+<td>Create student account (organizers seeded or created separately — document in README)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/login</code></td>
+<td>Public</td>
+<td>Returns JWT</td>
+</tr>
+</tbody>
+</table>
+<h3 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>/events</code></td>
+<td>Organizer</td>
+<td>Create event in DRAFT</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/events</code></td>
+<td>Both</td>
+<td>Students: published only. Organizers: own drafts + published</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/events/{id}</code></td>
+<td>Both</td>
+<td>Event details + confirmed count + capacity + waitlist size</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/events/{id}</code></td>
+<td>Organizer (owner)</td>
+<td>Edit event (only if still in DRAFT)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/events/{id}/publish</code></td>
+<td>Organizer (owner)</td>
+<td>DRAFT → PUBLISHED</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/events/{id}/cancel</code></td>
+<td>Organizer (owner)</td>
+<td>Cancel event; document behavior for existing registrations</td>
+</tr>
+</tbody>
+</table>
+<h3 id="registrations">Registrations<a class="headerlink" href="#registrations" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td><code>/events/{id}/registrations</code></td>
+<td>Student</td>
+<td>Register → CONFIRMED or WAITLISTED</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/registrations/{id}</code></td>
+<td>Student (owner)</td>
+<td>Cancel own registration; promotes next waitlisted student</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/registrations/me</code></td>
+<td>Student</td>
+<td>Own registrations + status + waitlist position</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/events/{id}/registrations</code></td>
+<td>Organizer (owner)</td>
+<td>Confirmed registrations for own event</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/events/{id}/waitlist</code></td>
+<td>Organizer (owner)</td>
+<td>Ordered waitlist (FIFO) for own event</td>
+</tr>
+</tbody>
+</table>
+<h3 id="notification-jobs-optional-endpoints-owned-by-c-worker-service">Notification jobs (optional endpoints — owned by C++ worker service)<a class="headerlink" href="#notification-jobs-optional-endpoints-owned-by-c-worker-service" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/notification-jobs</code></td>
+<td>Organizer</td>
+<td>List jobs for own events (filter by <code>event_id</code>)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/notification-jobs/{id}</code></td>
+<td>Organizer</td>
+<td>Single job detail</td>
+</tr>
+</tbody>
+</table>
+<h3 id="profile-optional">Profile (optional)<a class="headerlink" href="#profile-optional" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/users/me</code></td>
+<td>Both</td>
+<td>Current user profile</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/users/me</code></td>
+<td>Both</td>
+<td>Update display name / email</td>
+</tr>
+</tbody>
+</table>
+<h3 id="error-shape">Error shape<a class="headerlink" href="#error-shape" title="Permanent link">&para;</a></h3>
+<p>All error responses follow a consistent envelope:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Human-readable error message&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;machine_readable_code&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="10-rate-limiting">10. Rate limiting<a class="headerlink" href="#10-rate-limiting" title="Permanent link">&para;</a></h2>
+<p>Rate limiting protects the API against brute-force attacks and abuse. Redis is already in the stack for the notification pipeline, making it the natural choice — no extra infrastructure required.</p>
+<h3 id="strategy-sliding-window-with-redis-sorted-sets">Strategy: sliding window with Redis sorted sets<a class="headerlink" href="#strategy-sliding-window-with-redis-sorted-sets" title="Permanent link">&para;</a></h3>
+<p>A sliding window is more accurate than a fixed window. It counts requests within the last <em>N</em> seconds relative to <em>now</em>, so there is no burst problem at window boundaries.</p>
+<p>Each request adds a timestamped entry to a Redis sorted set keyed by endpoint and identifier. Entries older than the window are pruned on every check. The operation is atomic via a Redis pipeline:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">redis</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">check_rate_limit</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">redis</span><span class="o">.</span><span class="n">Redis</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">window_seconds</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns (is_limited, retry_after_seconds).&quot;&quot;&quot;</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">window_start</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">window_seconds</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">pipe</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">zremrangebyscore</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">window_start</span><span class="p">)</span>   <span class="c1"># drop entries outside window</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">zadd</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">now</span><span class="p">):</span> <span class="n">now</span><span class="p">})</span>               <span class="c1"># record this request</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">zcard</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>                               <span class="c1"># count requests in window</span>
+<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">expire</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">window_seconds</span><span class="p">)</span>              <span class="c1"># auto-cleanup idle keys</span>
+<a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+<a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">:</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>        <span class="n">oldest</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">zrange</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+<a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a>        <span class="n">retry_after</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">window_seconds</span> <span class="o">-</span> <span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">oldest</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">retry_after</span>
+<a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a>
+<a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a>    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">0</span>
+</code></pre></div>
+<p><strong>Redis key pattern:</strong> <code>hefest:ratelimit:{endpoint_tag}:{identifier}</code></p>
+<p>Examples:
+- <code>hefest:ratelimit:login:203.0.113.42</code> — per IP on the login endpoint
+- <code>hefest:ratelimit:register:203.0.113.42</code> — per IP on registration
+- <code>hefest:ratelimit:event_register:user:6ba7b810-...</code> — per user on event registration</p>
+<h3 id="limits-per-endpoint">Limits per endpoint<a class="headerlink" href="#limits-per-endpoint" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Identifier</th>
+<th>Limit</th>
+<th>Window</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST /login</code></td>
+<td>IP address</td>
+<td>10 requests</td>
+<td>60 s</td>
+<td>Brute-force credential guessing</td>
+</tr>
+<tr>
+<td><code>POST /register</code></td>
+<td>IP address</td>
+<td>5 requests</td>
+<td>3600 s</td>
+<td>Account creation spam</td>
+</tr>
+<tr>
+<td><code>POST /events/{id}/registrations</code></td>
+<td>User ID (from JWT)</td>
+<td>30 requests</td>
+<td>60 s</td>
+<td>Registration spam across events</td>
+</tr>
+</tbody>
+</table>
+<p>Global fallback (all routes): 200 requests / 60 s per IP. Catches unclassified abuse without requiring per-endpoint tuning.</p>
+<h3 id="http-response">HTTP response<a class="headerlink" href="#http-response" title="Permanent link">&para;</a></h3>
+<p>When a limit is exceeded, return <code>429 Too Many Requests</code> with a <code>Retry-After</code> header so clients can back off gracefully:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">429</span> <span class="ne">Too Many Requests</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="na">Retry-After</span><span class="o">:</span> <span class="l">42</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">{</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">    </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Too many requests. Please retry after 42 seconds.&quot;</span><span class="p">,</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">    </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rate_limit_exceeded&quot;</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="implementation-approach">Implementation approach<a class="headerlink" href="#implementation-approach" title="Permanent link">&para;</a></h3>
+<p>Rate limiting is implemented as a <strong>FastAPI middleware</strong> so it applies before any route handler runs and cannot be bypassed by individual endpoints. The middleware:</p>
+<ol>
+<li>Extracts the identifier (IP from <code>X-Forwarded-For</code> or <code>request.client.host</code>; user ID from the JWT if present and route matches a per-user limit).</li>
+<li>Runs the Redis pipeline check.</li>
+<li>Returns <code>429</code> immediately if limited; otherwise passes through to the next handler.</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">IP extraction behind nginx</p>
+<p>In the docker-compose setup, nginx sits in front of the API. Configure nginx to pass <code>X-Forwarded-For</code> and trust only the nginx container's IP in FastAPI (<code>--proxy-headers --forwarded-allow-ips</code>). Without this, all requests appear to come from the nginx container IP and rate limiting by IP breaks.</p>
+</div>
+<hr />
+<h2 id="11-deployment">11. Deployment<a class="headerlink" href="#11-deployment" title="Permanent link">&para;</a></h2>
+<h3 id="local-development-docker-compose">Local development (docker-compose)<a class="headerlink" href="#local-development-docker-compose" title="Permanent link">&para;</a></h3>
+<p><code>docker-compose up</code> starts all six services. Migrations run automatically on API startup via an entrypoint script.</p>
+<pre class="mermaid"><code>flowchart TB
+    subgraph compose["docker-compose (local dev)"]
+        nginx["nginx:alpine\n:8080 (public)\nroutes /notification-jobs/* → worker-api\neverything else → api"]
+        api["hefest-api\n:8000"]
+        relay["hefest-relay\n(same image, relay entrypoint)"]
+        worker["hefest-worker (C++)\n:9000 (notification endpoints)\n+ worker loop"]
+        pg["postgres:16\n:5432"]
+        redis["redis:7-alpine\n:6379"]
+        mailpit["mailpit\n:8025 (web UI)\n:1025 (SMTP)"]
+    end
+
+    nginx --&gt; api
+    nginx --&gt; worker
+    api --&gt; pg
+    api --&gt; redis
+    relay --&gt; pg
+    relay --&gt; redis
+    worker --&gt; redis
+    worker --&gt; pg
+    worker --&gt; mailpit</code></pre>
+<p>Services without a public port (<code>relay</code>) run as background workers — they produce no HTTP traffic of their own.</p>
+<h3 id="production-path-helm-appendix">Production path (Helm — appendix)<a class="headerlink" href="#production-path-helm-appendix" title="Permanent link">&para;</a></h3>
+<p>Production deployment targets Kubernetes via a minimal Helm chart. The same Docker images are used; configuration is injected via <code>values.yaml</code> (environment variables). Managed Postgres (e.g., RDS, CloudSQL) and managed Redis (e.g., ElastiCache) replace the in-compose containers.</p>
+<p>Scaling levers available by design:
+- <strong>API</strong>: stateless — scale horizontally by increasing replica count
+- <strong>Worker</strong>: Redis Streams consumer groups distribute messages across multiple worker replicas automatically
+- <strong>Relay</strong>: single instance is sufficient (it serializes the outbox); if relay throughput becomes a bottleneck, partition by <code>event_id</code> range across multiple relay instances</p>
+<hr />
+<h2 id="12-scalability-notes">12. Scalability notes<a class="headerlink" href="#12-scalability-notes" title="Permanent link">&para;</a></h2>
+<p>The current design was intentionally kept minimal (Postgres outbox + Redis Streams rather than a dedicated message broker like RabbitMQ or Kafka). This is sufficient for school-event scale and keeps the demo simple. The design documents the scaling path without requiring it to be built:</p>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Current approach</th>
+<th>Scaling path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Queue throughput</td>
+<td>Polling relay (1 s interval)</td>
+<td>Add Redis Streams relay → already done</td>
+</tr>
+<tr>
+<td>Worker parallelism</td>
+<td>Single worker process</td>
+<td>Redis consumer groups → add worker replicas</td>
+</tr>
+<tr>
+<td>Read throughput</td>
+<td>Postgres with covering indexes</td>
+<td>Add read replicas; cache static event metadata (not counts)</td>
+</tr>
+<tr>
+<td>Registration hotspot</td>
+<td>Row-level lock on event</td>
+<td>Advisory lock per event_id for even lower contention at scale</td>
+</tr>
+<tr>
+<td>Notifications</td>
+<td>At-least-once SMTP</td>
+<td>Add a dedicated transactional email provider (Postmark, SendGrid)</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="admonition-title">Do not cache registration counts</p>
+<p>The confirmed seat count is used in the no-overbooking transaction and must always be read from Postgres under a lock. Caching it would silently break the overbooking guarantee.</p>
+</div>
+<hr />
+<h2 id="13-open-decisions">13. Open decisions<a class="headerlink" href="#13-open-decisions" title="Permanent link">&para;</a></h2>
+<p>These items are not yet finalized and require confirmation before implementation begins.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Decision</th>
+<th>Options</th>
+<th>Default if not discussed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Does <code>ends_at</code> require a value, or is it nullable for single-datetime events?</td>
+<td>Nullable / Required</td>
+<td>Nullable</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Can a student re-register for an event after cancelling?</td>
+<td>Yes (unique index allows it) / No (add hard block)</td>
+<td>Yes — allowed</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Organizer creation: API endpoint vs seed script?</td>
+<td>Seed only / Admin endpoint</td>
+<td>Seed script, documented in README</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Cancellation rule for students: always allowed, or only before <code>starts_at</code>?</td>
+<td>Always / Until start</td>
+<td>Until <code>starts_at</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>EventCancelled: one bulk job with <code>event_id</code>, or one job per registered user?</td>
+<td>Bulk / Per-user</td>
+<td>Bulk (worker queries affected users)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Health/readiness endpoints (<code>/health</code>, <code>/ready</code>)?</td>
+<td>Implement / Skip</td>
+<td>Implement — low effort, strong demo story</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>This document reflects decisions made during the initial architecture brainstorming session on 2026-06-16. It is subject to revision based on mentor feedback.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
