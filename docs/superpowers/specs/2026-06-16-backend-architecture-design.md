@@ -491,7 +491,86 @@ All error responses follow a consistent envelope:
 
 ---
 
-## 10. Deployment
+## 10. Rate limiting
+
+Rate limiting protects the API against brute-force attacks and abuse. Redis is already in the stack for the notification pipeline, making it the natural choice — no extra infrastructure required.
+
+### Strategy: sliding window with Redis sorted sets
+
+A sliding window is more accurate than a fixed window. It counts requests within the last *N* seconds relative to *now*, so there is no burst problem at window boundaries.
+
+Each request adds a timestamped entry to a Redis sorted set keyed by endpoint and identifier. Entries older than the window are pruned on every check. The operation is atomic via a Redis pipeline:
+
+```python
+import time
+import redis
+
+def check_rate_limit(r: redis.Redis, key: str, limit: int, window_seconds: int) -> tuple[bool, int]:
+    """Returns (is_limited, retry_after_seconds)."""
+    now = time.time()
+    window_start = now - window_seconds
+
+    pipe = r.pipeline()
+    pipe.zremrangebyscore(key, 0, window_start)   # drop entries outside window
+    pipe.zadd(key, {str(now): now})               # record this request
+    pipe.zcard(key)                               # count requests in window
+    pipe.expire(key, window_seconds)              # auto-cleanup idle keys
+    _, _, count, _ = pipe.execute()
+
+    if count > limit:
+        oldest = float(r.zrange(key, 0, 0, withscores=True)[0][1])
+        retry_after = int(window_seconds - (now - oldest)) + 1
+        return True, retry_after
+
+    return False, 0
+```
+
+**Redis key pattern:** `hefest:ratelimit:{endpoint_tag}:{identifier}`
+
+Examples:
+- `hefest:ratelimit:login:203.0.113.42` — per IP on the login endpoint
+- `hefest:ratelimit:register:203.0.113.42` — per IP on registration
+- `hefest:ratelimit:event_register:user:6ba7b810-...` — per user on event registration
+
+### Limits per endpoint
+
+| Endpoint | Identifier | Limit | Window | Reason |
+|---|---|---|---|---|
+| `POST /login` | IP address | 10 requests | 60 s | Brute-force credential guessing |
+| `POST /register` | IP address | 5 requests | 3600 s | Account creation spam |
+| `POST /events/{id}/registrations` | User ID (from JWT) | 30 requests | 60 s | Registration spam across events |
+
+Global fallback (all routes): 200 requests / 60 s per IP. Catches unclassified abuse without requiring per-endpoint tuning.
+
+### HTTP response
+
+When a limit is exceeded, return `429 Too Many Requests` with a `Retry-After` header so clients can back off gracefully:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 42
+Content-Type: application/json
+
+{
+    "detail": "Too many requests. Please retry after 42 seconds.",
+    "code": "rate_limit_exceeded"
+}
+```
+
+### Implementation approach
+
+Rate limiting is implemented as a **FastAPI middleware** so it applies before any route handler runs and cannot be bypassed by individual endpoints. The middleware:
+
+1. Extracts the identifier (IP from `X-Forwarded-For` or `request.client.host`; user ID from the JWT if present and route matches a per-user limit).
+2. Runs the Redis pipeline check.
+3. Returns `429` immediately if limited; otherwise passes through to the next handler.
+
+!!! note "IP extraction behind nginx"
+    In the docker-compose setup, nginx sits in front of the API. Configure nginx to pass `X-Forwarded-For` and trust only the nginx container's IP in FastAPI (`--proxy-headers --forwarded-allow-ips`). Without this, all requests appear to come from the nginx container IP and rate limiting by IP breaks.
+
+---
+
+## 11. Deployment
 
 ### Local development (docker-compose)
 
@@ -533,7 +612,7 @@ Scaling levers available by design:
 
 ---
 
-## 11. Scalability notes
+## 12. Scalability notes
 
 The current design was intentionally kept minimal (Postgres outbox + Redis Streams rather than a dedicated message broker like RabbitMQ or Kafka). This is sufficient for school-event scale and keeps the demo simple. The design documents the scaling path without requiring it to be built:
 
@@ -550,7 +629,7 @@ The current design was intentionally kept minimal (Postgres outbox + Redis Strea
 
 ---
 
-## 12. Open decisions
+## 13. Open decisions
 
 These items are not yet finalized and require confirmation before implementation begins.
 
