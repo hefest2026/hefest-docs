@@ -324,7 +324,7 @@ If the cancelling student was **waitlisted** (not confirmed), no seat is freed a
 
 ### 6.3 Waitlist position (read-only)
 
-> **Covers:** [F3](../../criteria/grading-criteria.md#functionality-40-points) (waitlist position visible to student in `/registrations/me`) · [F4](../../criteria/grading-criteria.md#functionality-40-points) (waitlist size visible to organizer via `/events/{id}` counts) · [SC2](../../criteria/grading-criteria.md#scalability--design-15-points) (covered index avoids a sequential scan)
+> **Covers:** [F3](../../criteria/grading-criteria.md#functionality-40-points) (waitlist position visible to student in `/registrations/me`) · [F4](../../criteria/grading-criteria.md#functionality-40-points) (waitlist size visible to organizer via `/events/{id}` counts) · [SC2](../../criteria/grading-criteria.md#scalability-design-15-points) (covered index avoids a sequential scan)
 
 The waitlist position shown to a student in `GET /registrations/me` is computed at read time — no stored integer that can drift under concurrent writes.
 
@@ -691,7 +691,7 @@ Scaling levers available by design:
 
 ## 12. Scalability notes
 
-> **Covers:** [SC1](../../criteria/grading-criteria.md#scalability--design-15-points) · [SC2](../../criteria/grading-criteria.md#scalability--design-15-points) · [SC3](../../criteria/grading-criteria.md#scalability--design-15-points) — the table below maps each scalability concern to the current approach and the documented scaling path.
+> **Covers:** [SC1](../../criteria/grading-criteria.md#scalability-design-15-points) · [SC2](../../criteria/grading-criteria.md#scalability-design-15-points) · [SC3](../../criteria/grading-criteria.md#scalability-design-15-points) — the table below maps each scalability concern to the current approach and the documented scaling path.
 
 The current design was intentionally kept minimal (Postgres outbox + Redis Streams rather than a dedicated message broker like RabbitMQ or Kafka). This is sufficient for school-event scale and keeps the demo simple. The design documents the scaling path without requiring it to be built:
 
