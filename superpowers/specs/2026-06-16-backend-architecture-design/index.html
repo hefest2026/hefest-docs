@@ -14,6 +14,8 @@
         <link rel="prev" href="../../..">
       
       
+        <link rel="next" href="../../../criteria/grading-criteria/">
+      
       
         
       
@@ -247,6 +249,26 @@
   
   
   Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../criteria/grading-criteria/" class="md-tabs__link">
+          
+  
+  
+  Criteria
 
         </a>
       </li>
@@ -953,6 +975,93 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Criteria
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Criteria
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../criteria/grading-criteria/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grading Criteria
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1522,7 +1631,7 @@
     Relay --&gt;|"XADD"| Redis[("Redis Streams")]
     Worker --&gt;|"XREADGROUP / XACK"| Redis
     Worker --&gt;|"UPDATE status, INSERT log"| PG
-    Worker --&gt;|"SMTP"| Mail["Mailpit (dev)\nor real SMTP (prod)"]</code></pre>
+    Worker --&gt;|"SMTP"| Mail["Mailpit (dev)\nResend (prod)"]</code></pre>
 <table>
 <thead>
 <tr>
@@ -1577,8 +1686,8 @@
 </tr>
 <tr>
 <td>Migrations</td>
-<td>Aerich</td>
-<td>Native Tortoise migration tool</td>
+<td>Tortoise ORM built-in (<code>tortoise</code> CLI)</td>
+<td><code>makemigrations</code> / <code>migrate</code> / <code>downgrade</code> built into Tortoise ORM since v1.0; Aerich is no longer maintained</td>
 </tr>
 <tr>
 <td>Validation</td>
@@ -1609,6 +1718,11 @@
 <td>Dev email</td>
 <td>Mailpit</td>
 <td>Captures outbound email locally without a real SMTP account</td>
+</tr>
+<tr>
+<td>Prod email</td>
+<td>Resend</td>
+<td>Transactional email API for production; worker switches provider via <code>HEFEST_SMTP_*</code> env vars</td>
 </tr>
 <tr>
 <td>Containers</td>
@@ -1709,7 +1823,7 @@
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── services/        — business logic (registration, promotion, outbox)
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   └── worker/
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│       └── relay.py     — outbox-to-Redis relay (separate process entrypoint)
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>├── migrations/          — Aerich migration files
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>├── migrations/          — Tortoise ORM migration files
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>├── tests/
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>├── Dockerfile
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>└── docker-compose.yml   — composes api + relay + worker + postgres + redis + mailpit
@@ -1726,10 +1840,13 @@
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Schema ownership</p>
-<p>All database migrations live in <code>hefest-api</code>. The C++ worker connects to the same PostgreSQL database but <strong>never runs migrations</strong>. If you add a table or column, run <code>aerich migrate</code> in <code>hefest-api</code> first, then update the C++ code.</p>
+<p>All database migrations live in <code>hefest-api</code>. The C++ worker connects to the same PostgreSQL database but <strong>never runs migrations</strong>. If you add a table or column, run <code>tortoise makemigrations &amp;&amp; tortoise migrate</code> in <code>hefest-api</code> first, then update the C++ code.</p>
 </div>
 <hr />
 <h2 id="6-data-model">6. Data model<a class="headerlink" href="#6-data-model" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#backend-30-points">B2</a> — relational schema, migrations, uniqueness constraints, and partial indexes.</p>
+</blockquote>
 <pre class="mermaid"><code>erDiagram
     users {
         uuid id PK
@@ -1820,12 +1937,18 @@
 </code></pre></div>
 <hr />
 <h2 id="7-critical-transactions">7. Critical transactions<a class="headerlink" href="#7-critical-transactions" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> · <a href="../../../criteria/grading-criteria/#code-quality-10-points">CQ3</a> — the no-overbooking and promotion logic; the sequence diagrams and warning box below serve as the required documentation for non-obvious transactional logic.</p>
+</blockquote>
 <p>These two transactions are the core of the system's correctness guarantees.</p>
 <div class="admonition warning">
 <p class="admonition-title">Tortoise ORM: <code>select_for_update()</code> must be inside an explicit transaction</p>
-<p><code>FOR UPDATE</code> only holds a lock for the life of its transaction. In Tortoise, an <code>Events.select_for_update()</code> issued <em>outside</em> an <code>async with in_transaction() as conn:</code> block runs in autocommit mode — the lock is acquired and released the instant the statement finishes, silently defeating the overbooking guarantee below. Always wrap the lock + count + insert in a single <code>in_transaction()</code> context and pass that connection (<code>.using_db(conn)</code>) to every query in the block.</p>
+<p><code>FOR UPDATE</code> locks rows "until the end of the transaction" (confirmed against Tortoise ORM v1.x docs). Outside an explicit transaction, Tortoise runs in autocommit mode — the lock is acquired and released the instant the statement finishes, silently defeating the overbooking guarantee. Always wrap the lock + count + insert in a single <code>async with in_transaction() as conn:</code> block (or <code>@atomic()</code> decorator) and pass that connection (<code>.using_db(conn)</code>) to every query in the block.</p>
 </div>
 <h3 id="61-student-registers-for-an-event">6.1 Student registers for an event<a class="headerlink" href="#61-student-registers-for-an-event" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> (overbooking prevention, CONFIRMED/WAITLISTED outcome) · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> (<code>RegistrationConfirmed</code> / <code>RegistrationWaitlisted</code> domain event inserted in same transaction)</p>
+</blockquote>
 <p>The challenge: two students can POST simultaneously. Without serialization, both could read "2 of 3 seats taken" and both get confirmed — creating 4 confirmed rows for a capacity-3 event (overbooking).</p>
 <p>The fix: lock the event row at the start of the transaction. Any concurrent registration for the same event blocks at that lock until the first transaction commits.</p>
 <pre class="mermaid"><code>sequenceDiagram
@@ -1853,6 +1976,9 @@
 </div>
 <p>If the unique index fires (student already has an active registration for this event), Postgres raises an error and the transaction rolls back automatically. Return <code>409 Conflict</code> to the client.</p>
 <h3 id="62-student-cancels-automatic-waitlist-promotion">6.2 Student cancels → automatic waitlist promotion<a class="headerlink" href="#62-student-cancels-automatic-waitlist-promotion" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> (student cancellation rule + automatic FIFO promotion) · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> (<code>WaitlistPromoted</code> and <code>RegistrationCancelled</code> events)</p>
+</blockquote>
 <p>The seat freed by a cancellation must be assigned to the next waitlisted student <strong>in the same transaction</strong>. There must be no moment where the seat appears "free" without an owner.</p>
 <pre class="mermaid"><code>sequenceDiagram
     participant Client
@@ -1882,6 +2008,9 @@
 <p>Students may cancel only <strong>before the event's <code>starts_at</code></strong>. A cancellation attempt at or after <code>starts_at</code> is rejected with <code>409 Conflict</code> / <code>event_already_started</code>.</p>
 </div>
 <h3 id="63-waitlist-position-read-only">6.3 Waitlist position (read-only)<a class="headerlink" href="#63-waitlist-position-read-only" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> (waitlist position visible to student in <code>/registrations/me</code>) · <a href="../../../criteria/grading-criteria/#functionality-40-points">F4</a> (waitlist size visible to organizer via <code>/events/{id}</code> counts) · <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC2</a> (covered index avoids a sequential scan)</p>
+</blockquote>
 <p>The waitlist position shown to a student in <code>GET /registrations/me</code> is computed at read time — no stored integer that can drift under concurrent writes.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1">-- For /registrations/me: student is waitlisted across multiple events</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="k">SELECT</span>
@@ -1903,6 +2032,9 @@
 <p>The <code>idx_registrations_waitlist_fifo</code> index covers the inner count query directly.</p>
 <hr />
 <h2 id="8-async-notification-pipeline">8. Async notification pipeline<a class="headerlink" href="#8-async-notification-pipeline" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#backend-30-points">B1</a> (separate worker process, producer/consumer separated) · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> (≥ 3 domain event types end-to-end) · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A2</a> (real email via Resend in prod + <code>notification_log</code> table) · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A3</a> (job states, retry policy, failure visibility) · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A4</a> (idempotency via <code>ON CONFLICT DO NOTHING</code> + unique key)</p>
+</blockquote>
 <h3 id="71-the-dual-write-problem">7.1 The dual-write problem<a class="headerlink" href="#71-the-dual-write-problem" title="Permanent link">&para;</a></h3>
 <p>When a registration is saved, two things must happen: record it in the database and enqueue a notification job. If these go to two different systems (e.g., Postgres + RabbitMQ), a process crash between the two writes can lose the event permanently.</p>
 <p><strong>Solution:</strong> the notification job is a row in the <em>same</em> Postgres database, inserted in the <em>same</em> transaction as the registration. Both writes succeed or both roll back — atomically. This pattern is called the <strong>transactional outbox</strong>.</p>
@@ -1976,6 +2108,7 @@
 <th>Event type</th>
 <th>Trigger</th>
 <th>Mandatory</th>
+<th>Criteria</th>
 </tr>
 </thead>
 <tbody>
@@ -1983,26 +2116,31 @@
 <td><code>RegistrationConfirmed</code></td>
 <td>Student registered, seat available</td>
 <td>Yes</td>
+<td><a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> · <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a></td>
 </tr>
 <tr>
 <td><code>RegistrationWaitlisted</code></td>
 <td>Student registered, event full</td>
 <td>Yes</td>
+<td><a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> · <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a></td>
 </tr>
 <tr>
 <td><code>WaitlistPromoted</code></td>
 <td>Confirmed registration cancelled, next student promoted</td>
 <td>Yes</td>
+<td><a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> · <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a></td>
 </tr>
 <tr>
 <td><code>RegistrationCancelled</code></td>
 <td>Student cancels own registration</td>
 <td>Bonus</td>
+<td><a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> · <a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a></td>
 </tr>
 <tr>
 <td><code>EventCancelled</code></td>
 <td>Organizer cancels event (bulk job per registered user)</td>
 <td>Bonus</td>
+<td><a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> · <a href="../../../criteria/grading-criteria/#functionality-40-points">F2</a></td>
 </tr>
 </tbody>
 </table>
@@ -2016,6 +2154,9 @@
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
 </code></pre></div>
 <h3 id="75-idempotency-strategy">7.5 Idempotency strategy<a class="headerlink" href="#75-idempotency-strategy" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#additional-features-25-points">A4</a> — unique <code>idempotency_key</code> + <code>ON CONFLICT DO NOTHING</code> prevents duplicate emails on redelivery.</p>
+</blockquote>
 <p>Email delivery is <strong>at-least-once</strong> — the relay may re-publish a message if it crashes between the <code>XADD</code> and marking the job <code>published</code>. Redis may also redeliver an unacknowledged message via <code>XAUTOCLAIM</code>. To prevent duplicate emails, the worker classifies every message by the state of its <code>notification_log</code> row before sending:</p>
 <ol>
 <li><strong>Claim before sending:</strong> the worker inserts a <code>notification_log</code> row with <code>status='processing'</code>, <code>attempts=1</code> using <code>ON CONFLICT DO NOTHING</code> <em>before</em> touching SMTP. The worker that inserts the row (1 row affected) proceeds to send.</li>
@@ -2035,6 +2176,9 @@
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1">-- 0 rows affected → SELECT status, attempts and branch as above.</span>
 </code></pre></div>
 <h3 id="76-retry-policy">7.6 Retry policy<a class="headerlink" href="#76-retry-policy" title="Permanent link">&para;</a></h3>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#additional-features-25-points">A3</a> — <code>pending / processing / completed / failed</code> job states; max 3 attempts; failed rows visible via <code>/notification-jobs</code>.</p>
+</blockquote>
 <p>Delivery is retried on <strong>transient</strong> failures (SMTP connection error, 4xx greylisting, timeout) up to <strong>3 attempts</strong>, then parked as <code>failed</code>.</p>
 <table>
 <thead>
@@ -2065,6 +2209,9 @@
 <p>The 5-minute <code>XAUTOCLAIM</code> idle window provides natural spacing between attempts, so no explicit exponential backoff is needed at this scale. A <code>failed</code> row stays visible via <code>/notification-jobs</code> for manual inspection; automated dead-letter handling is out of scope.</p>
 <hr />
 <h2 id="9-rest-api-surface">9. REST API surface<a class="headerlink" href="#9-rest-api-surface" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#backend-30-points">B3</a> · <a href="../../../criteria/grading-criteria/#rest-endpoints-10-points">R1</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a> — complete REST surface with role enforcement; each table notes additional criteria per endpoint.</p>
+</blockquote>
 <p>All protected routes require <code>Authorization: Bearer &lt;token&gt;</code>.</p>
 <h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
 <table>
@@ -2074,6 +2221,7 @@
 <th>Path</th>
 <th>Role</th>
 <th>Description</th>
+<th>Criteria</th>
 </tr>
 </thead>
 <tbody>
@@ -2082,12 +2230,14 @@
 <td><code>/register</code></td>
 <td>Public</td>
 <td>Create student account (organizers via seed script — see README)</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S1</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S2</a></td>
 </tr>
 <tr>
 <td><code>POST</code></td>
 <td><code>/login</code></td>
 <td>Public</td>
 <td>Returns JWT</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S1</a></td>
 </tr>
 </tbody>
 </table>
@@ -2099,6 +2249,7 @@
 <th>Path</th>
 <th>Role</th>
 <th>Description</th>
+<th>Criteria</th>
 </tr>
 </thead>
 <tbody>
@@ -2107,36 +2258,42 @@
 <td><code>/events</code></td>
 <td>Organizer</td>
 <td>Create event in DRAFT</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F2</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/events</code></td>
 <td>Both</td>
 <td>Students: published only. Organizers: own drafts + published</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F2</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/events/{id}</code></td>
 <td>Both</td>
 <td>Event details + confirmed count + capacity + waitlist size</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F2</a> · <a href="../../../criteria/grading-criteria/#functionality-40-points">F4</a></td>
 </tr>
 <tr>
 <td><code>PUT</code></td>
 <td><code>/events/{id}</code></td>
 <td>Organizer (owner)</td>
 <td>Edit event (only if still in DRAFT)</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F2</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>POST</code></td>
 <td><code>/events/{id}/publish</code></td>
 <td>Organizer (owner)</td>
 <td>DRAFT → PUBLISHED</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F2</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>POST</code></td>
 <td><code>/events/{id}/cancel</code></td>
 <td>Organizer (owner)</td>
 <td>Cancel event; document behavior for existing registrations</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F2</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 </tbody>
 </table>
@@ -2148,6 +2305,7 @@
 <th>Path</th>
 <th>Role</th>
 <th>Description</th>
+<th>Criteria</th>
 </tr>
 </thead>
 <tbody>
@@ -2156,30 +2314,35 @@
 <td><code>/events/{id}/registrations</code></td>
 <td>Student</td>
 <td>Register → CONFIRMED or WAITLISTED</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>DELETE</code></td>
 <td><code>/registrations/{id}</code></td>
 <td>Student (owner)</td>
 <td>Cancel own registration (allowed until event <code>starts_at</code>); promotes next waitlisted student</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A1</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/registrations/me</code></td>
 <td>Student</td>
 <td>Own registrations + status + waitlist position</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F3</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/events/{id}/registrations</code></td>
 <td>Organizer (owner)</td>
 <td>Confirmed registrations for own event</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F4</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/events/{id}/waitlist</code></td>
 <td>Organizer (owner)</td>
 <td>Ordered waitlist (FIFO) for own event</td>
+<td><a href="../../../criteria/grading-criteria/#functionality-40-points">F4</a> · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a></td>
 </tr>
 </tbody>
 </table>
@@ -2191,6 +2354,7 @@
 <th>Path</th>
 <th>Role</th>
 <th>Description</th>
+<th>Criteria</th>
 </tr>
 </thead>
 <tbody>
@@ -2199,12 +2363,14 @@
 <td><code>/notification-jobs</code></td>
 <td>Organizer</td>
 <td>List jobs for own events (filter by <code>event_id</code>)</td>
+<td><a href="../../../criteria/grading-criteria/#additional-features-25-points">A2</a> · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A3</a></td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/notification-jobs/{id}</code></td>
 <td>Organizer</td>
 <td>Single job detail</td>
+<td><a href="../../../criteria/grading-criteria/#additional-features-25-points">A2</a> · <a href="../../../criteria/grading-criteria/#additional-features-25-points">A3</a></td>
 </tr>
 </tbody>
 </table>
@@ -2267,6 +2433,9 @@
 </code></pre></div>
 <hr />
 <h2 id="10-rate-limiting">10. Rate limiting<a class="headerlink" href="#10-rate-limiting" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#security-15-points">S2</a> — protects <code>/login</code> and <code>/register</code> against brute-force and account-creation spam; uses Redis already in the stack (no extra infra).</p>
+</blockquote>
 <p>Rate limiting protects the API against brute-force attacks and abuse. Redis is already in the stack for the notification pipeline, making it the natural choice — no extra infrastructure required.</p>
 <h3 id="strategy-sliding-window-with-redis-sorted-sets">Strategy: sliding window with Redis sorted sets<a class="headerlink" href="#strategy-sliding-window-with-redis-sorted-sets" title="Permanent link">&para;</a></h3>
 <p>A sliding window is more accurate than a fixed window. It counts requests within the last <em>N</em> seconds relative to <em>now</em>, so there is no burst problem at window boundaries.</p>
@@ -2389,6 +2558,9 @@
 - <strong>Relay</strong>: single instance is sufficient (it serializes the outbox); if relay throughput becomes a bottleneck, partition by <code>event_id</code> range across multiple relay instances</p>
 <hr />
 <h2 id="12-scalability-notes">12. Scalability notes<a class="headerlink" href="#12-scalability-notes" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p><strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC1</a> · <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC2</a> · <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC3</a> — the table below maps each scalability concern to the current approach and the documented scaling path.</p>
+</blockquote>
 <p>The current design was intentionally kept minimal (Postgres outbox + Redis Streams rather than a dedicated message broker like RabbitMQ or Kafka). This is sufficient for school-event scale and keeps the demo simple. The design documents the scaling path without requiring it to be built:</p>
 <table>
 <thead>
@@ -2422,7 +2594,7 @@
 <tr>
 <td>Notifications</td>
 <td>At-least-once SMTP</td>
-<td>Add a dedicated transactional email provider (Postmark, SendGrid)</td>
+<td>Switch worker to Resend (already in production stack) for higher deliverability and send-rate limits</td>
 </tr>
 </tbody>
 </table>
