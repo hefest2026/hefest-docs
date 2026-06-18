@@ -28,9 +28,6 @@ flowchart LR
     subgraph api_repo["hefest-api  (Python · one Docker image)"]
         API["api\nFastAPI HTTP server"]
         Relay["relay\noutbox-to-streams bridge"]
-    end
-
-    subgraph worker_repo["hefest-worker  (Python)"]
         Worker["worker\nstream consumer + email sender"]
     end
 
@@ -47,13 +44,9 @@ flowchart LR
 |---|---|---|
 | `api` | `hefest-api` | Handle HTTP requests, enforce auth/roles, run business transactions |
 | `relay` | `hefest-api` | Bridge: read pending outbox rows → publish to Redis Streams |
-| `worker` | `hefest-worker` | Consume Redis Streams → send email → write delivery log |
+| `worker` | `hefest-api` | Consume Redis Streams → send email → write delivery log |
 
-The `api` and `relay` live in the same repo and share the same Docker image (different entrypoints). The `worker` is a separate Python repo and Docker image. They are composed together via `docker-compose`.
-
-### Why two repos?
-
-The relay and the worker have different deployment lifecycles, different scaling dimensions, and different concerns. The Redis Streams interface is a clean boundary: `hefest-api` owns the database schema and the outbox; `hefest-worker` reads from Redis and writes only the delivery log. Keeping them separate means each can be scaled, replaced, or redeployed independently of the other.
+All three processes live in the same `hefest-api` repo and share the same Docker image (different entrypoints). They are composed together via `docker-compose`.
 
 ### Why three processes, not two?
 
@@ -88,8 +81,8 @@ The relay decouples outbox-polling from email-sending. The API writes to Postgre
 
 | Artifact | Pattern | Examples |
 |---|---|---|
-| Repositories | `hefest-<role>` | `hefest-api`, `hefest-worker`, `hefest-docs` |
-| Docker images | `hefest-<role>` | `hefest-api`, `hefest-worker` |
+| Repositories | `hefest-<role>` | `hefest-api`, `hefest-docs` |
+| Docker images | `hefest-<role>` | `hefest-api` |
 | Compose services | `hefest-<role>` | `hefest-api`, `hefest-relay`, `hefest-worker`, `hefest-db`, `hefest-redis`, `hefest-mail` |
 | Container names | `hefest-<role>` | same as compose service names |
 | Database name | `hefest_db` | — |
@@ -113,22 +106,10 @@ hefest-api/          (Python)
 │   ├── routers/         — one file per resource (auth, events, registrations, users)
 │   ├── services/        — business logic (registration, promotion, outbox)
 │   └── worker/
-│       └── relay.py     — outbox-to-Redis relay (separate process entrypoint)
+│       ├── relay.py     — outbox-to-Redis relay (separate process entrypoint)
+│       ├── consumer.py  — Redis Streams XREADGROUP loop (separate process entrypoint)
+│       └── mailer.py    — email delivery (Mailpit dev / Resend prod)
 ├── migrations/          — Tortoise ORM migration files
 ├── tests/
 └── Dockerfile
-
-hefest-worker/       (Python)
-├── hefest_worker/
-│   ├── main.py          — process entrypoint
-│   ├── consumer.py      — Redis Streams XREADGROUP loop
-│   ├── mailer.py        — email delivery (Mailpit dev / Resend prod)
-│   ├── db.py            — asyncpg for notification_log writes
-│   └── config.py        — settings via pydantic-settings
-├── pyproject.toml
-├── tests/
-└── Dockerfile
 ```
-
-!!! note "Schema ownership"
-    All database migrations live in `hefest-api`. The worker connects to the same PostgreSQL database but **never runs migrations**. If you add a table or column, run `tortoise makemigrations && tortoise migrate` in `hefest-api` first, then update the worker.

@@ -82,7 +82,7 @@ flowchart TB
         nginx["nginx:alpine\n:8080 (public)\nroutes /notification-jobs/* → worker-api\neverything else → api"]
         api["hefest-api\n:8000"]
         relay["hefest-relay\n(same image, relay entrypoint)"]
-        worker["hefest-worker (Python)\n:9000 (notification endpoints)\n+ worker loop"]
+        worker["hefest-worker\n(hefest-api image, worker entrypoint)\n+ worker loop"]
         pg["postgres:16\n:5432"]
         redis["redis:7-alpine\n:6379"]
         mailpit["mailpit\n:8025 (web UI)\n:1025 (SMTP)"]
@@ -140,7 +140,7 @@ Decisions made during the brainstorming session on 2026-06-16. Status: **Approve
 | 2 | Re-register after cancelling | **Allowed** — the partial unique index already permits it; a hard block would add needless code. |
 | 3 | Organizer account creation | **Seed script** (documented in README). No public org-creation endpoint, avoiding a privilege-escalation surface. |
 | 4 | Student cancellation window | **Allowed until `starts_at`** — a later attempt returns `409 / event_already_started`. |
-| 5 | Worker language | **Python** — the worker is a separate Python service (`hefest-worker`), using redis-py, asyncpg, and aiosmtplib. The Redis Streams interface remains the clean boundary between repos. |
+| 5 | Worker placement | **Same repo as API** — the worker lives in `hefest-api` under `hefest/worker/`, sharing the same Docker image with a different entrypoint. redis-py, asyncpg, and aiosmtplib are added as dependencies of `hefest-api`. No separate repo or image. |
 | 6 | Health/readiness endpoints | **Implemented** — `/health` and `/ready`. |
 | 7 | Relay: poll vs. push (HEF-16) | **LISTEN/NOTIFY push + fallback poll** — trigger fires `pg_notify` at COMMIT for ~ms latency; long-interval poll preserves at-least-once durability. |
 
