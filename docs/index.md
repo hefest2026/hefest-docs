@@ -10,4 +10,9 @@ Hefest is a school event management platform. Students browse and register for p
 
 | Section | Description |
 |---|---|
-| [Backend Design](superpowers/specs/2026-06-16-backend-architecture-design.md) | System architecture, data model, async pipeline, REST surface, and deployment |
+| [Overview](architecture/index.md) | System topology, technology stack, naming conventions, and repo structure |
+| [Data Model](architecture/data-model.md) | Database schema, constraints, and partial indexes |
+| [Transactions](architecture/transactions.md) | Registration, cancellation, waitlist promotion, and overbooking prevention |
+| [Notification Pipeline](architecture/pipeline.md) | Transactional outbox, LISTEN/NOTIFY relay, domain events, idempotency, and retry |
+| [API Reference](architecture/api.md) | Complete REST surface with role enforcement |
+| [Operations](architecture/operations.md) | Rate limiting, deployment, scalability, and architecture decisions |

@@ -45,6 +45,11 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Architecture:
-      - Backend Design: superpowers/specs/2026-06-16-backend-architecture-design.md
+      - Overview: architecture/index.md
+      - Data Model: architecture/data-model.md
+      - Transactions: architecture/transactions.md
+      - Notification Pipeline: architecture/pipeline.md
+      - API Reference: architecture/api.md
+      - Operations: architecture/operations.md
   - Criteria:
       - Grading Criteria: criteria/grading-criteria.md
