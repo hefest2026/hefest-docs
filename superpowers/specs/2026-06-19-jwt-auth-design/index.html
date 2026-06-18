@@ -1,0 +1,1670 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Architecture and development documentation for the Hefest school event management platform, built for AIBEST 2026 Burgas.">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>JWT Auth with Refresh Tokens + Google & Microsoft OAuth — Design - Hefest — School Events System</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#jwt-auth-with-refresh-tokens-google-microsoft-oauth-design" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Hefest — School Events System" class="md-header__button md-logo" aria-label="Hefest — School Events System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Hefest — School Events System
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              JWT Auth with Refresh Tokens + Google &amp; Microsoft OAuth — Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/hefest2026/hefest-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/" class="md-tabs__link">
+          
+  
+  
+  Architecture
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../criteria/grading-criteria/" class="md-tabs__link">
+          
+  
+  
+  Criteria
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Hefest — School Events System" class="md-nav__button md-logo" aria-label="Hefest — School Events System" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Hefest — School Events System
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/hefest2026/hefest-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/data-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Transactions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Notification Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Criteria
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Criteria
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../criteria/grading-criteria/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grading Criteria
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-token-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Token model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Token model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration reference
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-data-model-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Data model changes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Data model changes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-users-table-one-migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 users table (one migration)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-new-oauth_identities-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 New oauth_identities table
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-new-refresh_tokens-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 New refresh_tokens table
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Endpoints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Endpoints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transport
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-oauth-providers-google-microsoft-via-fastapi-sso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. OAuth providers (Google &amp; Microsoft, via fastapi-sso)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-module-layout-fills-the-empty-hefest-stubs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Module layout (fills the empty hefest/ stubs)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-security-notes-grading-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Security notes (grading map)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-optional-polish-implement-only-if-time-permits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Optional polish (implement only if time permits)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-docs-to-update-after-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Docs to update after implementation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-review-resolutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Review resolutions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="jwt-auth-with-refresh-tokens-google-microsoft-oauth-design">JWT Auth with Refresh Tokens + Google &amp; Microsoft OAuth — Design<a class="headerlink" href="#jwt-auth-with-refresh-tokens-google-microsoft-oauth-design" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-06-19
+<strong>Status:</strong> Approved (design)
+<strong>Scope:</strong> <code>hefest-api</code> authentication subsystem
+<strong>Covers:</strong> <a href="../../../criteria/grading-criteria/#security-15-points">S1</a> (password hashing) · <a href="../../../criteria/grading-criteria/#security-15-points">S2</a> (input validation) · <a href="../../../criteria/grading-criteria/#security-15-points">S3</a> (authorization) · <a href="../../../criteria/grading-criteria/#scalability--design-15-points">SC3</a> (stateless horizontal scaling)</p>
+<hr />
+<h2 id="1-summary">1. Summary<a class="headerlink" href="#1-summary" title="Permanent link">&para;</a></h2>
+<p>Authentication issues a short-lived <strong>access token</strong> (stateless JWT) plus a long-lived,
+<strong>server-side, rotating refresh token</strong> (opaque, stored hashed in Postgres). Users authenticate
+with email + password, <strong>Sign in with Google</strong>, or <strong>Sign in with Microsoft</strong> (Entra ID — for
+Bulgarian <code>edu.mon.bg</code> government education accounts). In every case the backend mints <strong>our own</strong>
+token pair — the provider's tokens are never used to call the Hefest API.</p>
+<p><strong>Email verification gates local accounts:</strong> a local registration is <strong>inactive until the email is
+confirmed</strong> (verification link sent through the existing notification pipeline). An OAuth sign-in is
+proof of email ownership, so SSO users are <strong>active immediately</strong>.</p>
+<p><strong>Client:</strong> a browser <strong>SPA</strong> today; a <strong>mobile app is planned later</strong>. Transport supports both — a
+web client uses an httpOnly refresh cookie; a future mobile client uses a Bearer/body refresh token.
+The refresh endpoint reads the token from <strong>cookie or body</strong>, so the mobile path needs no redesign.</p>
+<p>OAuth providers live in a provider-agnostic <code>oauth_identities</code> table, so adding or re-prioritising a
+provider later (e.g. making Microsoft primary) needs no schema change.</p>
+<p><strong>Providers are individually toggleable.</strong> A provider is <em>enabled</em> only when its config is present, so
+running with <strong>no OAuth apps set up at all</strong> is the default — email/password auth always works, and
+Google/Microsoft light up when (and only when) their env vars are filled in. A public
+<code>GET /auth/providers</code> tells the frontend which login options to render.</p>
+<p>Auth lives <strong>inside the <code>api</code> process</strong> (not a separate service). Token <em>validation</em> is stateless
+in-process JWT decoding on every request; token <em>issuance</em> is low-frequency. The API therefore
+scales horizontally by running more <code>api</code> replicas — this is the SC3 scalability story.</p>
+<hr />
+<h2 id="2-token-model">2. Token model<a class="headerlink" href="#2-token-model" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Type</th>
+<th>Lifetime</th>
+<th>Storage</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Access</td>
+<td>JWT, HS256 (<code>HEFEST_JWT_SECRET</code>)</td>
+<td><strong>15 min</strong></td>
+<td>none (stateless)</td>
+<td>Claims: <code>sub</code> (user id, str), <code>role</code>, <code>iss="hefest"</code>, <code>aud="hefest-api"</code>, <code>iat</code>, <code>exp</code>, <code>type="access"</code></td>
+</tr>
+<tr>
+<td>Refresh</td>
+<td>Opaque random (<code>secrets.token_urlsafe(32)</code>)</td>
+<td><strong>14 days</strong></td>
+<td>Postgres <code>refresh_tokens</code>, <strong>SHA-256 hash only</strong></td>
+<td>Single-use, rotated on every refresh</td>
+</tr>
+<tr>
+<td>Email-verify</td>
+<td>JWT, HS256</td>
+<td><strong>24 h</strong></td>
+<td>none (stateless)</td>
+<td>Claims: <code>sub</code>, <code>aud="hefest-verify"</code>, <code>exp</code>, <code>type="email_verify"</code> — embedded in the verification link</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why opaque + SHA-256 (not JWT, not bcrypt) for refresh:</strong> refresh tokens are high-entropy random
+strings, so a fast SHA-256 is safe at rest and allows an indexed lookup by hash. bcrypt would force a
+table scan. The opaque token carries no claims and is meaningless if leaked from the DB (only the
+hash is stored).</p>
+<p><strong><code>aud</code> claim:</strong> access tokens are validated with <code>aud="hefest-api"</code>; the verify-email JWT uses a
+distinct <code>aud="hefest-verify"</code> so a verify link can never be replayed as an API token, and a shared
+secret across environments can't cross-validate.</p>
+<p><strong>HS256 vs RS256:</strong> HS256 is correct here because auth and the API are colocated in one process — any
+verifier already holds the signing secret. If a separate service ever needs to <em>verify</em> tokens
+without being able to <em>forge</em> them, migrate to RS256/ES256 with a published public key. (Algorithm is
+read from config, so this is a config + key-distribution change, not a code rewrite.)</p>
+<p><strong>Rotation:</strong> every <code>POST /auth/refresh</code> invalidates the presented token (<code>revoked_at = now()</code>) and
+issues a fresh pair, <strong>atomically</strong> (see §4).</p>
+<p><strong>Reuse detection:</strong> if a token that is already revoked is presented to <code>/auth/refresh</code>, the token
+was stolen and replayed after the legitimate client already rotated it. The whole family is
+compromised, so we revoke <strong>all</strong> of that user's refresh tokens and reject (<code>401
+token_reuse_detected</code>), forcing a fresh login everywhere (aligns with RFC 6819).</p>
+<p><strong>Config (<code>config.py</code>):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">jwt_expire_minutes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">15</span>              <span class="c1"># was 60</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">jwt_audience</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hefest-api&quot;</span>          <span class="c1"># new — validated on every access token</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">refresh_token_expire_days</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">14</span>       <span class="c1"># new</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">email_verify_expire_hours</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">24</span>       <span class="c1"># new</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">google_client_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>                <span class="c1"># HEFEST_GOOGLE_CLIENT_ID</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">google_client_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>            <span class="c1"># HEFEST_GOOGLE_CLIENT_SECRET, .env only</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">google_redirect_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>             <span class="c1"># HEFEST_GOOGLE_REDIRECT_URI</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">microsoft_client_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>             <span class="c1"># HEFEST_MICROSOFT_CLIENT_ID</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">microsoft_client_secret</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>         <span class="c1"># HEFEST_MICROSOFT_CLIENT_SECRET, .env only</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">microsoft_tenant</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>                <span class="c1"># HEFEST_MICROSOFT_TENANT (edu.mon.bg Entra tenant id)</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">microsoft_redirect_uri</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>          <span class="c1"># HEFEST_MICROSOFT_REDIRECT_URI</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">frontend_oauth_success_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>      <span class="c1"># 302 target after OAuth, e.g. https://app.hefest.bg/oauth</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">cors_origins</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>              <span class="c1"># explicit allowed origins (credentials mode)</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">refresh_cookie_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hefest_refresh&quot;</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">refresh_cookie_secure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>        <span class="c1"># False only in local dev over http</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="c1"># (rate-limit settings already exist in config.py — reused here, see §7)</span>
+</code></pre></div>
+<p><strong>Provider enablement (no toggle table needed):</strong> a provider is <em>enabled</em> iff <strong>all</strong> its required
+settings are non-empty — Google: <code>client_id</code> + <code>client_secret</code> + <code>redirect_uri</code>; Microsoft: those
+plus <code>tenant</code>. The full set of providers the code knows how to speak to is a constant; the <em>enabled</em>
+subset is derived from config — both feed <code>GET /auth/providers</code> (§4):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">SUPPORTED_OAUTH_PROVIDERS</span><span class="p">:</span> <span class="n">Final</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;google&quot;</span><span class="p">,</span> <span class="s2">&quot;microsoft&quot;</span><span class="p">)</span>   <span class="c1"># everything the code can do</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nd">@property</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">enabled_oauth_providers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>              <span class="c1"># the configured subset</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">out</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">google_client_id</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">google_client_secret</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">google_redirect_uri</span><span class="p">:</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;google&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="k">if</span> <span class="nb">all</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">microsoft_client_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">microsoft_client_secret</span><span class="p">,</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">microsoft_redirect_uri</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">microsoft_tenant</span><span class="p">)):</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;microsoft&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="k">return</span> <span class="n">out</span>
+</code></pre></div>
+<p>Leaving the env vars blank is the intended way to run without setting up the OAuth apps. Local
+password auth is always on. (An explicit <code>HEFEST_&lt;PROVIDER&gt;_ENABLED=false</code> hard-off, even when
+configured, is optional — §8.)</p>
+<h3 id="configuration-reference">Configuration reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h3>
+<p>All variables are read with the <code>HEFEST_</code> prefix (e.g. <code>jwt_secret</code> → <code>HEFEST_JWT_SECRET</code>). Secrets
+live only in <code>.env</code> (gitignored) and are never logged.</p>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Required?</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HEFEST_JWT_SECRET</code></td>
+<td><strong>yes (prod)</strong></td>
+<td><code>change-me-in-production</code></td>
+<td>HS256 signing key for access &amp; verify JWTs.</td>
+</tr>
+<tr>
+<td><code>HEFEST_JWT_ALGORITHM</code></td>
+<td>no</td>
+<td><code>HS256</code></td>
+<td>Signing algorithm; switch point for the RS256 path (§2).</td>
+</tr>
+<tr>
+<td><code>HEFEST_JWT_AUDIENCE</code></td>
+<td>no</td>
+<td><code>hefest-api</code></td>
+<td>Validated <code>aud</code> on every access token.</td>
+</tr>
+<tr>
+<td><code>HEFEST_JWT_EXPIRE_MINUTES</code></td>
+<td>no</td>
+<td><code>15</code></td>
+<td>Access-token lifetime.</td>
+</tr>
+<tr>
+<td><code>HEFEST_REFRESH_TOKEN_EXPIRE_DAYS</code></td>
+<td>no</td>
+<td><code>14</code></td>
+<td>Refresh-token lifetime.</td>
+</tr>
+<tr>
+<td><code>HEFEST_EMAIL_VERIFY_EXPIRE_HOURS</code></td>
+<td>no</td>
+<td><code>24</code></td>
+<td>Verification-link lifetime.</td>
+</tr>
+<tr>
+<td><code>HEFEST_REFRESH_COOKIE_NAME</code></td>
+<td>no</td>
+<td><code>hefest_refresh</code></td>
+<td>Name of the httpOnly refresh cookie.</td>
+</tr>
+<tr>
+<td><code>HEFEST_REFRESH_COOKIE_SECURE</code></td>
+<td>no</td>
+<td><code>true</code></td>
+<td>Set <code>false</code> only for local http dev.</td>
+</tr>
+<tr>
+<td><code>HEFEST_FRONTEND_OAUTH_SUCCESS_URL</code></td>
+<td>OAuth only</td>
+<td><code>""</code></td>
+<td>302 target after a successful OAuth login.</td>
+</tr>
+<tr>
+<td><code>HEFEST_CORS_ORIGINS</code></td>
+<td>web SPA</td>
+<td><code>[]</code></td>
+<td>Allowed browser origins (credentials mode).</td>
+</tr>
+<tr>
+<td><code>HEFEST_GOOGLE_CLIENT_ID</code></td>
+<td>Google</td>
+<td><code>""</code></td>
+<td><strong>Enables Google</strong> when all three Google vars are set.</td>
+</tr>
+<tr>
+<td><code>HEFEST_GOOGLE_CLIENT_SECRET</code></td>
+<td>Google</td>
+<td><code>""</code></td>
+<td>Google OAuth client secret.</td>
+</tr>
+<tr>
+<td><code>HEFEST_GOOGLE_REDIRECT_URI</code></td>
+<td>Google</td>
+<td><code>""</code></td>
+<td>Must exactly match the Google console (trailing slash matters).</td>
+</tr>
+<tr>
+<td><code>HEFEST_MICROSOFT_CLIENT_ID</code></td>
+<td>Microsoft</td>
+<td><code>""</code></td>
+<td><strong>Enables Microsoft</strong> when all four MS vars are set.</td>
+</tr>
+<tr>
+<td><code>HEFEST_MICROSOFT_CLIENT_SECRET</code></td>
+<td>Microsoft</td>
+<td><code>""</code></td>
+<td>Entra app client secret.</td>
+</tr>
+<tr>
+<td><code>HEFEST_MICROSOFT_TENANT</code></td>
+<td>Microsoft</td>
+<td><code>""</code></td>
+<td><code>edu.mon.bg</code> Entra tenant id — restricts sign-in to that org.</td>
+</tr>
+<tr>
+<td><code>HEFEST_MICROSOFT_REDIRECT_URI</code></td>
+<td>Microsoft</td>
+<td><code>""</code></td>
+<td>Must exactly match the Azure console.</td>
+</tr>
+</tbody>
+</table>
+<p>A provider's whole group is <strong>all-or-nothing</strong>: set every var in the group to enable it, or leave the
+group blank to run without it. Partial config (e.g. a Google client id but no secret) leaves the
+provider <strong>disabled</strong> and reported as <code>available: false</code>.</p>
+<hr />
+<h2 id="3-data-model-changes">3. Data model changes<a class="headerlink" href="#3-data-model-changes" title="Permanent link">&para;</a></h2>
+<h3 id="31-users-table-one-migration">3.1 <code>users</code> table (one migration)<a class="headerlink" href="#31-users-table-one-migration" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>password_hash</code> → <strong>nullable</strong> (an OAuth-only user has no password).</li>
+<li>Add <code>email_verified_at</code> → <code>DatetimeField(null=True)</code>. <code>NULL</code> = unverified/inactive. Set on
+  successful email verification, or immediately on first OAuth sign-in.</li>
+<li>No per-provider columns — provider identities live in <code>oauth_identities</code> (§3.2).</li>
+</ul>
+<h3 id="32-new-oauth_identities-table">3.2 New <code>oauth_identities</code> table<a class="headerlink" href="#32-new-oauth_identities-table" title="Permanent link">&para;</a></h3>
+<p>Provider-agnostic link table so any number of OAuth providers map to one Hefest user, and one user
+can link several providers (local + Google + Microsoft).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>oauth_identities
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>  id          uuid PK
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>  user_id     uuid FK -&gt; users (indexed, on_delete=CASCADE)
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  provider    text                 # &#39;google&#39; | &#39;microsoft&#39;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>  subject     text                 # provider&#39;s stable subject id (OpenID.id)
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>  email       text                 # email at the provider; refreshed on each login (audit)
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>  created_at  timestamptz
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>  UNIQUE (provider, subject)
+</code></pre></div>
+<p>We key on <code>(provider, subject)</code>, <strong>not email</strong>: emails change or get reassigned; the provider subject
+is stable. <code>email</code> is updated on each login to track the current provider contact. Adding a provider
+is <strong>data-model-free</strong>.</p>
+<h3 id="33-new-refresh_tokens-table">3.3 New <code>refresh_tokens</code> table<a class="headerlink" href="#33-new-refresh_tokens-table" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>refresh_tokens
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  id           uuid PK
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>  user_id      uuid FK -&gt; users (indexed, on_delete=CASCADE)
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>  token_hash   text UNIQUE          # sha256 hex of the opaque token (UNIQUE -&gt; B-tree index)
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>  expires_at   timestamptz
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>  revoked_at   timestamptz NULL     # set on rotation, logout, or family revocation
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>  created_at   timestamptz
+</code></pre></div>
+<p>Valid iff <code>revoked_at IS NULL AND expires_at &gt; now()</code>. Tortoise model → tracked by <code>makemigrations</code>.
+Expired rows are harmless (rejected on read); pruning is optional (§8).</p>
+<hr />
+<h2 id="4-endpoints">4. Endpoints<a class="headerlink" href="#4-endpoints" title="Permanent link">&para;</a></h2>
+<p>All under the <code>auth</code> router. Errors use the project envelope <code>{ "detail", "code" }</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Auth</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/providers</code></td>
+<td>public</td>
+<td>Frontend capability discovery — which login methods are available (see below).</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/register</code></td>
+<td>public</td>
+<td>Create <strong>unverified</strong> student (hash password, <code>email_verified_at=NULL</code>) + enqueue verification email (outbox, same transaction). Returns <strong>201, no tokens</strong>.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/auth/verify-email</code></td>
+<td>verify JWT (link)</td>
+<td>Decode the <code>email_verify</code> JWT; set <code>email_verified_at=now()</code> (idempotent). Activates the account.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/login</code></td>
+<td>public</td>
+<td>Verify bcrypt password. If <code>email_verified_at IS NULL</code> → <code>403 email_not_verified</code>. Else issue access (JSON) + refresh (cookie <strong>or</strong> body per transport, §5).</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/auth/refresh</code></td>
+<td>refresh token (cookie or body)</td>
+<td>Look up by SHA-256 hash. <strong>Atomic</strong> guarded update <code>… SET revoked_at=now() WHERE id=? AND revoked_at IS NULL</code>; if it updated a row → issue new pair. If the row exists but was <strong>already revoked</strong> → reuse detected: revoke the whole family, <code>401 token_reuse_detected</code>.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/auth/logout</code></td>
+<td>refresh token (cookie or body)</td>
+<td>Revoke that row; clear the refresh cookie.</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/auth/logout-all</code></td>
+<td><strong>access Bearer <em>or</em> refresh token</strong></td>
+<td>Revoke all refresh rows for the user. Accepts a refresh token in the body too, so a user with an expired access token can still log out everywhere.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/google/login</code></td>
+<td>public</td>
+<td><code>fastapi-sso</code> → 302 to Google.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/google/callback</code></td>
+<td>public</td>
+<td>Verify → find-or-create user → <strong>302 redirect to frontend</strong> with access token + refresh cookie.</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/microsoft/login</code></td>
+<td>public</td>
+<td><code>fastapi-sso</code> → 302 to Microsoft (single Entra tenant).</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/microsoft/callback</code></td>
+<td>public</td>
+<td>Same as Google callback, <code>provider="microsoft"</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>*/login</code> and <code>*/callback</code> pairs share one generic implementation (§5) — only the SSO client and
+<code>provider</code> literal differ.</p>
+<p><strong>Provider discovery (<code>GET /auth/providers</code>)</strong> — lists <strong>every theoretically-supported provider</strong>
+(<code>SUPPORTED_OAUTH_PROVIDERS</code>, §2), each marked <code>available</code> according to
+<code>settings.enabled_oauth_providers</code> — the single source of truth, so it can never disagree with which
+routes actually work:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&quot;password&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="nt">&quot;providers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;google&quot;</span><span class="p">,</span><span class="w">    </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w">  </span><span class="nt">&quot;login_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/auth/google/login&quot;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;microsoft&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;login_url&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
+</code></pre></div>
+<p>Unconfigured providers stay in the list with <code>available: false</code> and <code>login_url: null</code>, so the
+frontend can render them as disabled/"unavailable" buttons (e.g. greyed out) rather than hiding them.
+The frontend renders all login options from this response instead of hard-coding them.</p>
+<p><strong>Disabled-provider routes:</strong> the <code>*/login</code> and <code>*/callback</code> routes for a provider that isn't enabled
+respond <code>404 { "detail": "...", "code": "sso_provider_disabled" }</code> (a single guard derived from the
+same enabled set) — so a stale bookmark or hand-crafted request fails clearly rather than 500-ing on a
+missing client.</p>
+<p><strong>Concurrency:</strong> <code>/auth/refresh</code> rotation and family-revocation run inside a DB transaction; rotation
+uses the atomic guarded <code>UPDATE … WHERE revoked_at IS NULL</code> (check affected rowcount) so 10 concurrent
+replays of one token cannot each mint a new pair — only the first update wins, the rest see an
+already-revoked row and trigger reuse detection. (Same <code>FOR UPDATE</code>/atomic discipline as the
+registration transaction.)</p>
+<h3 id="transport">Transport<a class="headerlink" href="#transport" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Web (cookie mode, default):</strong> access token in the JSON body (SPA holds it in memory); refresh
+  token in a <code>Secure; HttpOnly; SameSite=Strict; Path=/auth</code> cookie. OAuth callbacks 302-redirect to
+  <code>frontend_oauth_success_url</code> with the access token in the URL <strong>fragment</strong> (<code>#access_token=…</code>,
+  invisible to server logs) and the refresh cookie set.</li>
+<li><strong>Frontend requirement (review #2):</strong> on the OAuth-success route the SPA must read the token into
+    memory and <strong>immediately</strong> call <code>window.history.replaceState()</code> to scrub the <code>#access_token=…</code>
+    fragment from the address bar, so it can't leak via history, shoulder-surfing, screen-share, or
+    URL-reading extensions. (A future hardening that removes the token from the URL entirely — a
+    one-time code exchanged at a <code>POST /auth/oauth/exchange</code> endpoint — is noted in §8.)</li>
+<li><strong>Mobile (Bearer mode, future):</strong> client opts in (e.g. <code>X-Auth-Transport: bearer</code> on login); the
+  refresh token is returned in the JSON body instead of a cookie and sent back in the body on
+  <code>/auth/refresh</code>. The endpoint already reads refresh from <strong>cookie or body</strong>, so this is additive.</li>
+</ul>
+<p>JSON body shape (access token always; refresh only in Bearer mode):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">&quot;access_token&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;eyJ...&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;token_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;bearer&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;expires_in&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">900</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+<hr />
+<h2 id="5-oauth-providers-google-microsoft-via-fastapi-sso">5. OAuth providers (Google &amp; Microsoft, via <code>fastapi-sso</code>)<a class="headerlink" href="#5-oauth-providers-google-microsoft-via-fastapi-sso" title="Permanent link">&para;</a></h2>
+<p>Redirect + callback, with <code>fastapi-sso</code> owning each handshake (state/PKCE/code-exchange). We ignore
+the provider's tokens and mint our own pair. Both providers share one generic callback.</p>
+<p>SSO clients are constructed <strong>only for enabled providers</strong> (<code>settings.enabled_oauth_providers</code>, §2),
+so an unconfigured provider instantiates nothing and a disabled <code>*/login</code>/<code>*/callback</code> is guarded to
+<code>404 sso_provider_disabled</code> (§4).</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># built lazily per enabled provider; absent providers are never instantiated</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">google_sso</span> <span class="o">=</span> <span class="n">GoogleSSO</span><span class="p">(</span><span class="n">google_client_id</span><span class="p">,</span> <span class="n">google_client_secret</span><span class="p">,</span> <span class="n">google_redirect_uri</span><span class="p">,</span> <span class="n">use_state</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">microsoft_sso</span> <span class="o">=</span> <span class="n">MicrosoftSSO</span><span class="p">(</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">microsoft_client_id</span><span class="p">,</span> <span class="n">microsoft_client_secret</span><span class="p">,</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">tenant</span><span class="o">=</span><span class="n">microsoft_tenant</span><span class="p">,</span>                       <span class="c1"># single-tenant: only edu.mon.bg accounts</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">redirect_uri</span><span class="o">=</span><span class="n">microsoft_redirect_uri</span><span class="p">,</span> <span class="n">use_state</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">scope</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;openid&quot;</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;profile&quot;</span><span class="p">],</span>          <span class="c1"># explicit for Entra</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span>
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_oauth_callback</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">,</span> <span class="n">sso</span><span class="p">,</span> <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RedirectResponse</span><span class="p">:</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="k">async</span> <span class="k">with</span> <span class="n">sso</span><span class="p">:</span>
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>        <span class="n">openid</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sso</span><span class="o">.</span><span class="n">verify_and_process</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>          <span class="c1"># -&gt; OpenID</span>
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>    <span class="n">user</span> <span class="o">=</span> <span class="k">await</span> <span class="n">find_or_create_oauth_user</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">openid</span><span class="p">)</span>    <span class="c1"># services/auth.py</span>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a>    <span class="n">access</span> <span class="o">=</span> <span class="n">create_access_token</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a>    <span class="n">set_refresh_cookie</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">issue_refresh_token</span><span class="p">(</span><span class="n">user</span><span class="p">))</span>     <span class="c1"># web; Bearer mode returns body</span>
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a>    <span class="k">return</span> <span class="n">RedirectResponse</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">frontend_oauth_success_url</span><span class="si">}</span><span class="s2">#access_token=</span><span class="si">{</span><span class="n">access</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a>
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/auth/google/callback&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">google_callback</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">,</span> <span class="n">response</span><span class="p">:</span> <span class="n">Response</span><span class="p">):</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>    <span class="k">return</span> <span class="k">await</span> <span class="n">_oauth_callback</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">google_sso</span><span class="p">,</span> <span class="s2">&quot;google&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="c1"># /auth/microsoft/callback is the same body with microsoft_sso and &quot;microsoft&quot;.</span>
+</code></pre></div>
+<p><strong>OpenID mapping:</strong> an <code>oauth_identities</code> row is <code>provider</code>, <code>subject = openid.id</code>,
+<code>email = openid.email</code>; the linked <code>User</code> gets <code>full_name = openid.display_name</code>, role = <code>student</code>
+(organizers stay seed-only). Use <code>openid.model_dump()</code> (Pydantic v2), never <code>.dict()</code>.</p>
+<p><strong><code>find_or_create_oauth_user(provider, openid)</code> logic:</strong></p>
+<p>Run inside a transaction (the <code>users.email</code> UNIQUE constraint is the backstop — on a concurrent
+<code>IntegrityError</code>, re-fetch and re-evaluate from step 1):</p>
+<ol>
+<li>Identity exists for <code>(provider, openid.id)</code> → return its user; refresh stored <code>email</code> if changed.</li>
+<li>Else look up a user by <code>openid.email</code>:</li>
+<li><strong>Verified</strong> local user (<code>email_verified_at IS NOT NULL</code>) <strong>and</strong> provider asserts the email is
+     verified → <strong>auto-link</strong>: insert an identity row, return that user.</li>
+<li><strong>Unverified</strong> local user (<code>email_verified_at IS NULL</code>) → <strong>take over the dormant row</strong>, because
+     the original registrant never proved ownership and the provider just did: set
+     <code>email_verified_at = now()</code>, <strong><code>password_hash = NULL</code></strong> (kills the squatter's password),
+     <code>full_name = openid.display_name</code>; insert the identity row; return that user.</li>
+<li>No user with that email → create a new <code>student</code> user (<code>email_verified_at = now()</code>) + identity row.</li>
+</ol>
+<blockquote>
+<p><strong>Account-takeover guard (review #1):</strong> auto-link only ever attaches to a <em>verified</em> local account.
+The dangerous case — a squatter who registered someone else's email locally — leaves an
+<strong>unverified</strong> row; on the real owner's OAuth sign-in we <strong>take that row over and null its
+password</strong>, so the squatter loses all access. This is safe because an unverified account can never
+have authenticated (register issues no tokens, login is blocked until verified), so the row owns no
+events or registrations — there is nothing to steal, only a name to claim. Creating a <em>new</em> user on
+an email collision is <strong>avoided</strong> precisely because <code>users.email</code> is <code>UNIQUE</code> and would otherwise
+raise an <code>IntegrityError</code>.</p>
+</blockquote>
+<p><strong>Provider verification signal:</strong> Google → <code>email_verified == true</code>. Microsoft Entra single-tenant →
+a successful tenant login is authoritative for <code>@edu.mon.bg</code> (the org owns the domain); optionally
+also allowlist the email domain as defence in depth.</p>
+<p><strong>CSRF / state:</strong> <code>use_state=True</code> — <code>fastapi-sso</code> generates and verifies the <code>state</code>; the frontend
+must <strong>not</strong> supply it. Redirect URIs must be <strong>exact</strong> matches in the Google/Azure consoles
+(trailing slashes matter).</p>
+<p><strong>Library risk</strong> (<code>fastapi-sso</code> churns across minors; Entra less battle-tested than Google):</p>
+<ul>
+<li><strong>Pin exactly</strong> in <code>pyproject.toml</code> (<code>fastapi-sso==&lt;latest&gt;</code>), not a range.</li>
+<li><strong>Spike the Entra flow first</strong> (real tenant, real callback) before committing. The library is used
+  <strong>only</strong> inside <code>_oauth_callback</code>/the OAuth routes; if Entra misbehaves, swap the Microsoft branch
+  to <code>authlib</code> + <code>httpx</code> behind the same helper — single-helper blast radius.</li>
+</ul>
+<hr />
+<h2 id="6-module-layout-fills-the-empty-hefest-stubs">6. Module layout (fills the empty <code>hefest/</code> stubs)<a class="headerlink" href="#6-module-layout-fills-the-empty-hefest-stubs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>models/refresh_token.py</code></td>
+<td><code>RefreshToken</code> Tortoise model (§3.3)</td>
+</tr>
+<tr>
+<td><code>models/oauth_identity.py</code></td>
+<td><code>OAuthIdentity</code> Tortoise model (§3.2)</td>
+</tr>
+<tr>
+<td><code>schemas/auth.py</code></td>
+<td><code>RegisterRequest</code> (with <code>PasswordPolicy</code> field validator), <code>LoginRequest</code>, <code>VerifyEmailRequest</code>, <code>TokenResponse</code> — Pydantic v2 (<strong>S2</strong>)</td>
+</tr>
+<tr>
+<td><code>services/auth.py</code></td>
+<td><code>hash_password</code>/<code>verify_password</code> (passlib bcrypt, <strong>S1</strong>); <code>create_access_token</code>; <code>issue_refresh_token</code>; <code>rotate_refresh_token</code> (atomic + reuse detection); <code>revoke</code>; <code>revoke_all_for_user</code>; <code>create_email_verify_token</code>/<code>consume_email_verify_token</code>; <code>find_or_create_oauth_user</code>; <code>set_refresh_cookie</code></td>
+</tr>
+<tr>
+<td><code>services/notifications.py</code> (existing pipeline)</td>
+<td>register enqueues the verification email as an outbox row</td>
+</tr>
+<tr>
+<td><code>routers/auth.py</code></td>
+<td>All endpoints in §4 + the generic <code>_oauth_callback</code> helper (§5) + <code>GET /auth/providers</code> + the <code>sso_provider_disabled</code> guard, all reading <code>settings.enabled_oauth_providers</code></td>
+</tr>
+<tr>
+<td><code>routers/deps.py</code></td>
+<td><code>get_current_user</code> (decode + validate <code>aud</code>, load <code>User</code>) + <code>require_role(*roles)</code> — injected by every protected route (<strong>S3</strong>, <strong>CQ4</strong>); plus a <code>rate_limit(...)</code> dependency wrapping the existing config</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># routers/deps.py — reuse that satisfies S3 across every protected route</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_current_user</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Depends</span><span class="p">(</span><span class="n">oauth2_scheme</span><span class="p">))</span> <span class="o">-&gt;</span> <span class="n">User</span><span class="p">:</span> <span class="o">...</span>   <span class="c1"># validates aud=&quot;hefest-api&quot;</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">require_role</span><span class="p">(</span><span class="o">*</span><span class="n">roles</span><span class="p">:</span> <span class="n">UserRole</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span> <span class="o">...</span>   <span class="c1"># UserRole is already a StrEnum</span>
+</code></pre></div>
+<p><code>CORSMiddleware</code> is registered in <code>main.py</code> with <code>allow_origins=cors_origins</code>,
+<code>allow_credentials=True</code> (required for the refresh cookie).</p>
+<hr />
+<h2 id="7-security-notes-grading-map">7. Security notes (grading map)<a class="headerlink" href="#7-security-notes-grading-map" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>S1</strong> — passwords hashed with passlib <strong>bcrypt, cost factor 12</strong>; <code>password_hash</code> nullable for
+  OAuth-only users. <code>PasswordPolicy</code> validator enforces a <strong>minimum length (≥ 12)</strong>; a
+  common-password blacklist (<code>zxcvbn</code> / top-1000) is optional polish (§8).</li>
+<li><strong>S2</strong> — all auth inputs validated via Pydantic v2; tokens and identities looked up by
+  parameterised values, never concatenated. <strong>Rate limiting</strong> reuses the existing <code>config.py</code>
+  settings (<code>rate_limit_login_*</code>, <code>rate_limit_register_*</code>, plus the global limiter) via a
+  <code>rate_limit</code> dependency on <code>/login</code>, <code>/register</code>, and <code>/auth/refresh</code> (per-IP, and per-account on
+  login).</li>
+<li><strong>S3</strong> — <code>get_current_user</code> + <code>require_role</code> enforce role/ownership on every protected route;
+  access tokens are short-lived (15 min) and carry a validated <code>aud</code>; refresh tokens are revocable
+  (logout / logout-all-via-refresh / rotation) with reuse detection that revokes the whole family;
+  unverified local accounts cannot authenticate; Microsoft sign-in is restricted to the <code>edu.mon.bg</code>
+  Entra tenant.</li>
+<li><strong>SC3</strong> — access-token validation is stateless in-process JWT decoding → <code>api</code> scales
+  horizontally; refresh state is shared Postgres reachable by all replicas. HS256→RS256 migration
+  path documented (§2) for any future external verifier.</li>
+<li><strong>Browser security</strong> — refresh token lives in a <code>HttpOnly; Secure; SameSite=Strict</code> cookie (not
+  JS-readable → XSS can't exfiltrate it); access token is short-lived and held in memory. <code>SameSite=Strict</code>
+  is the CSRF defence for the cookie; CORS is locked to explicit <code>cors_origins</code> with credentials.</li>
+<li>Google and Microsoft <code>client_secret</code>s and the JWT secret live only in <code>.env</code> (gitignored); never
+  logged.</li>
+</ul>
+<hr />
+<h2 id="8-optional-polish-implement-only-if-time-permits">8. Optional polish (implement only if time permits)<a class="headerlink" href="#8-optional-polish-implement-only-if-time-permits" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Common-password blacklist</strong> — <code>zxcvbn</code> or a top-1000 list in the <code>PasswordPolicy</code> validator.</li>
+<li><strong>Expired/unverified row pruning</strong> — periodic delete of <code>refresh_tokens</code> past <code>expires_at</code> and of
+   stale unverified <code>users</code> (<code>email_verified_at IS NULL AND created_at &lt; now() - interval</code>).</li>
+<li><strong>Resend verification email</strong> — <code>POST /auth/resend-verification</code>.</li>
+<li><strong>Full mobile Bearer mode</strong> — the <code>X-Auth-Transport</code> selector and body-refresh path are seamed in
+   §4/§5; finishing and testing the mobile flow is deferred until the app exists.</li>
+<li><strong>Microsoft as primary</strong> — purely a UX-ordering change; <code>oauth_identities</code> already supports it.</li>
+<li><strong>Explicit provider hard-off</strong> — a <code>HEFEST_&lt;PROVIDER&gt;_ENABLED=false</code> flag to disable a provider
+   even when its config is present (e.g. temporarily). Default enablement is config-presence (§2).</li>
+<li><strong>One-time-code OAuth exchange</strong> — instead of the access token in the URL fragment, the callback
+   redirects with a short-lived single-use code the SPA exchanges via <code>POST /auth/oauth/exchange</code>.
+   Removes the token from the URL entirely; supersedes the §4 fragment-scrub requirement when built.</li>
+</ol>
+<hr />
+<h2 id="9-docs-to-update-after-implementation">9. Docs to update after implementation<a class="headerlink" href="#9-docs-to-update-after-implementation" title="Permanent link">&para;</a></h2>
+<ul>
+<li><code>architecture/index.md</code> — stack table says Auth is "<strong>Stateless</strong>"; update to <em>access-stateless,
+  refresh-stateful, email-verified</em>. Add <code>fastapi-sso</code>, Google + Microsoft (Entra) OAuth, and the
+  email-verification step to the stack.</li>
+<li><code>architecture/api.md</code> — add <code>/auth/providers</code>, <code>/auth/verify-email</code>, <code>/auth/refresh</code>,
+  <code>/auth/logout</code>, <code>/auth/logout-all</code>, <code>/auth/google/login</code>, <code>/auth/google/callback</code>,
+  <code>/auth/microsoft/login</code>, <code>/auth/microsoft/callback</code>; note the 201-no-tokens register, the
+  <code>403 email_not_verified</code> login case, <code>sso_provider_disabled</code> on disabled providers, access-token
+  TTL, and cookie transport. SSO availability is exposed via <code>/auth/providers</code>, <strong>not</strong> <code>/health</code> or
+  <code>/ready</code> (those stay ops-only liveness/readiness).</li>
+<li><code>architecture/data-model.md</code> — add <code>oauth_identities</code> and <code>refresh_tokens</code>; mark
+  <code>users.password_hash</code> nullable and add <code>users.email_verified_at</code>.</li>
+<li><strong><code>hefest-api/.env.example</code></strong> — add every variable from the §2 configuration reference, grouped
+  (core JWT / cookies / CORS / Google / Microsoft) with the same short comments, and the OAuth groups
+  left <strong>blank</strong> so a fresh checkout runs with local-password auth only and both SSOs reported
+  <code>available: false</code>.</li>
+<li><strong><code>architecture/</code> config page</strong> — surface the §2 configuration-reference table in the docs site
+  (which vars enable which provider, all-or-nothing groups, secrets-in-<code>.env</code>-only) so operators can
+  configure auth without reading the spec.</li>
+</ul>
+<hr />
+<h2 id="10-review-resolutions">10. Review resolutions<a class="headerlink" href="#10-review-resolutions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Item</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>OAuth email auto-link takeover</td>
+<td><strong>Fixed</strong> — auto-link only to a <em>verified</em> local account; email verification added (§3.1, §5).</td>
+</tr>
+<tr>
+<td>1b</td>
+<td>Unverified-email collision crashes on <code>users.email</code> UNIQUE</td>
+<td><strong>Fixed</strong> — take over the dormant unverified row (null its password) instead of creating a new user; transaction + IntegrityError backstop (§5).</td>
+</tr>
+<tr>
+<td>2b</td>
+<td>Access token leaks via URL fragment</td>
+<td><strong>Fixed</strong> — frontend <code>replaceState</code> scrub requirement; optional one-time-code exchange (§4, §8).</td>
+</tr>
+<tr>
+<td>—</td>
+<td>Concurrency in reuse detection</td>
+<td><strong>Fixed</strong> — atomic guarded update in a transaction (§4).</td>
+</tr>
+<tr>
+<td>—</td>
+<td>XSS vs CSRF (SPA)</td>
+<td><strong>Addressed</strong> — refresh in httpOnly/SameSite cookie, access in memory (§4, §7).</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Rate limiting "missing"</td>
+<td><strong>Corrected</strong> — already in <code>config.py</code>; now referenced and applied (§7).</td>
+</tr>
+<tr>
+<td>3</td>
+<td>HS256 limitation</td>
+<td><strong>Documented</strong> — RS256 migration note (§2).</td>
+</tr>
+<tr>
+<td>4</td>
+<td>logout-all needs valid access token</td>
+<td><strong>Fixed</strong> — also accepts a refresh token (§4).</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Verify Entra support</td>
+<td><strong>Verified</strong> in lib docs; explicit scopes + spike + authlib fallback (§5).</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>aud</code> claim</td>
+<td><strong>Added</strong> — <code>aud="hefest-api"</code> (§2).</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Password rules</td>
+<td><strong>Added</strong> — min length + bcrypt cost 12; blacklist optional (§7, §8).</td>
+</tr>
+<tr>
+<td>8</td>
+<td>"Microslop" in URL path</td>
+<td><strong>Rejected</strong> — fabricated; spec uses <code>/auth/microsoft/...</code> throughout.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>OAuth callback transport</td>
+<td><strong>Fixed</strong> — 302 redirect to frontend (§4, §5).</td>
+</tr>
+<tr>
+<td>10</td>
+<td>CORS + state CSRF</td>
+<td><strong>Documented</strong> — CORS origins, <code>use_state</code>, exact redirect URIs (§5, §6).</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>token_hash</code> index</td>
+<td><strong>Non-issue</strong> — <code>UNIQUE</code> emits a B-tree index (§3.3).</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Prune expired tokens</td>
+<td><strong>Optional</strong> — §8.</td>
+</tr>
+<tr>
+<td>13</td>
+<td><code>require_role</code>/<code>UserRole</code> enum</td>
+<td><strong>Non-issue</strong> — already a <code>StrEnum</code> (§6).</td>
+</tr>
+<tr>
+<td>14</td>
+<td><code>oauth_identities.email</code> updates</td>
+<td><strong>Decided</strong> — refreshed on each login (§3.2, §5).</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.sections", "content.code.copy", "content.code.annotate"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
