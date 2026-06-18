@@ -38,7 +38,7 @@ flowchart LR
 
     Client -->|"HTTP/JSON + JWT"| API
     API -->|"BEGIN … COMMIT\n(registration + outbox row)"| PG[("PostgreSQL")]
-    Relay -->|"poll pending rows"| PG
+    Relay -->|"LISTEN hefest_jobs\n(+ fallback poll)"| PG
     Relay -->|"XADD"| Redis[("Redis Streams")]
     Worker -->|"XREADGROUP / XACK"| Redis
     Worker -->|"UPDATE status, INSERT log"| PG
@@ -376,8 +376,9 @@ sequenceDiagram
     Note over API,PG: Step 1 — API commits registration + outbox row together
     API->>PG: COMMIT (registration + notification_jobs row, status='pending')
 
-    Note over Relay,PG: Step 2 — Relay bridges outbox to Redis
-    loop every ~1 second
+    Note over Relay,PG: Step 2 — Relay bridges outbox to Redis (push-driven)
+    Note over PG,Relay: AFTER INSERT trigger fires pg_notify('hefest_jobs') at COMMIT
+    loop woken by NOTIFY (or every ~5 s fallback)
         Relay->>PG: SELECT pending rows FOR UPDATE SKIP LOCKED
         PG-->>Relay: pending job(s)
         Relay->>Redis: XADD MAXLEN~10000 (JSON message with ids and event type)
@@ -402,6 +403,19 @@ sequenceDiagram
 
 !!! note "Stream retention"
     The relay caps the stream with `XADD ... MAXLEN ~ 10000` (approximate trimming) so it cannot grow unbounded over a long-running deployment. Trimmed entries are already delivered and acknowledged; the authoritative record of what was sent lives in `notification_log`, not in the stream.
+
+### 7.2.1 Why LISTEN/NOTIFY, not a polling loop
+
+> **Covers:** [SC1](../../criteria/grading-criteria.md#scalability-design-15-points) — push-based delivery at broker-grade latency without a broker; [B1](../../criteria/grading-criteria.md#backend-30-points) — producer/consumer separation preserved.
+
+The relay is **push-driven** by PostgreSQL `LISTEN/NOTIFY`, not a fixed-interval poll. An `AFTER INSERT` trigger on `notification_jobs` runs `pg_notify('hefest_jobs', '')`; the relay holds a dedicated `LISTEN` connection and drains the moment it is woken.
+
+**Why this matters — parity with Kafka-driven designs.** A 1-second poll adds up to a second of latency on every notification and burns one query per tick even when idle. `NOTIFY` collapses that to milliseconds — the same perceived real-time behaviour a Kafka consumer gets from a long-poll `fetch` — but with **zero added infrastructure**: the signal rides the Postgres connection we already hold. No broker, no KRaft/ZooKeeper quorum, no partition rebalancing to operate. A Kafka design would also need Debezium or an equivalent CDC connector to get an event onto the log atomically with the DB write; our trigger gives that for free, because `NOTIFY` is **transactional** — it is delivered only on `COMMIT` and deduplicated within the transaction, firing exactly when the outbox row becomes visible. The transactional outbox stays the durable source of truth; `NOTIFY` only removes the latency.
+
+**Why the fallback poll stays.** `LISTEN/NOTIFY` is fire-and-forget (at-most-once): a signal emitted while the relay is disconnected is **lost**, and the relay would never learn of that row from the signal alone. The row is still in Postgres, so a long-interval fallback poll (`relay_fallback_poll_interval`, default 5 s) guarantees eventual drain and a full catch-up on every reconnect. **Push for latency, poll for durability** — this hybrid keeps the at-least-once guarantee while matching broker-grade responsiveness on the happy path. The `idx_jobs_pending` partial index keeps each fallback scan to only the pending rows.
+
+!!! note "Empty payload by design"
+    The trigger sends an empty payload — just a wake signal. The relay re-queries `notification_jobs` itself, so the design is immune to the 8000-byte `NOTIFY` payload cap and never puts PII on the channel. A statement-level (not row-level) trigger collapses a bulk insert (e.g. the `EventCancelled` fan-out) to a single wake.
 
 ### 7.3 State machines — two tables, two lifecycles
 
@@ -697,7 +711,7 @@ The current design was intentionally kept minimal (Postgres outbox + Redis Strea
 
 | Concern | Current approach | Scaling path |
 |---|---|---|
-| Queue throughput | Polling relay (1 s interval) | Add Redis Streams relay → already done |
+| Queue latency | LISTEN/NOTIFY push + outbox fallback poll (5 s) | Broker-grade latency, no broker; partition relay by `event_id` if a single LISTEN connection saturates |
 | Worker parallelism | Single worker process | Redis consumer groups → add worker replicas |
 | Read throughput | Postgres with covering indexes | Add read replicas; cache static event metadata (not counts) |
 | Registration hotspot | Row-level lock on event | Advisory lock per event_id for even lower contention at scale |
@@ -719,6 +733,7 @@ The following were open during the brainstorming session and have since been res
 | 3 | Organizer account creation | **Seed script** (documented in README). No public org-creation endpoint, avoiding a privilege-escalation surface. |
 | 4 | Student cancellation window | **Allowed until `starts_at`** (see §7). A later attempt returns `409 / event_already_started`. |
 | 6 | Health/readiness endpoints | **Implemented** — `/health` and `/ready` (see §9). |
+| 7 | Relay: poll vs. push (HEF-16) | **LISTEN/NOTIFY push + fallback poll.** Trigger fires `pg_notify` at COMMIT for ~ms latency; long-interval poll preserves at-least-once durability. Broker-grade responsiveness without a broker. Relay loop scaffolded in `hefest/worker/relay.py`; implementation tracked under HEF-16. |
 
 ### Stretch feature (only if time permits)
 
