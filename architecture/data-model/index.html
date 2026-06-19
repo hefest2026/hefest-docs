@@ -14,7 +14,7 @@
         <link rel="prev" href="../">
       
       
-        <link rel="next" href="../transactions/">
+        <link rel="next" href="../auth/">
       
       
         
@@ -605,6 +605,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../transactions/" class="md-nav__link">
         
   
@@ -904,9 +932,10 @@
     users {
         uuid id PK
         text email UK
-        text password_hash
+        text password_hash "nullable"
         text full_name
         text role "student | organizer"
+        timestamptz email_verified_at "nullable"
         timestamptz created_at
     }
     events {
@@ -947,9 +976,27 @@
         timestamptz created_at
         timestamptz updated_at
     }
+    oauth_identities {
+        uuid id PK
+        uuid user_id FK
+        text provider "google | microsoft"
+        text subject
+        text email
+        timestamptz created_at
+    }
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        text token_hash UK
+        timestamptz expires_at
+        timestamptz revoked_at "nullable"
+        timestamptz created_at
+    }
 
     users ||--o{ events : "organizes"
     users ||--o{ registrations : "makes"
+    users ||--o{ oauth_identities : "has"
+    users ||--o{ refresh_tokens : "has"
     events ||--o{ registrations : "has"
     events ||--o{ notification_jobs : "triggers"</code></pre>
 <hr />
@@ -964,6 +1011,15 @@
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1">-- Enforced at the DB level as a backstop behind the application check.</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="k">ALTER</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">notification_log</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">    </span><span class="k">ADD</span><span class="w"> </span><span class="k">CONSTRAINT</span><span class="w"> </span><span class="n">uq_notification_log_key</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="p">(</span><span class="n">idempotency_key</span><span class="p">);</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1">-- OAuth identities: one provider-subject pair per user.</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1">-- A user may link multiple OAuth providers; provider + subject combo uniquely identifies a user across that provider.</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">uq_oauth_provider_subject</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">oauth_identities</span><span class="w"> </span><span class="p">(</span><span class="n">provider</span><span class="p">,</span><span class="w"> </span><span class="n">subject</span><span class="p">);</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="c1">-- Refresh tokens: token hash stored (not the token itself; hashed like passwords).</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="k">CREATE</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">uq_refresh_token_hash</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">    </span><span class="k">ON</span><span class="w"> </span><span class="n">refresh_tokens</span><span class="w"> </span><span class="p">(</span><span class="n">token_hash</span><span class="p">);</span>
 </code></pre></div>
 <p>These are declared natively in Tortoise ORM model <code>Meta</code> using <code>UniqueConstraint(condition=...)</code> (available since Tortoise ORM v1.1.4), so <code>makemigrations</code> tracks them automatically without <code>RunSQL</code>.</p>
 <hr />
@@ -1017,6 +1073,26 @@
 <td>Organizer account creation</td>
 <td>Seed script (documented in README)</td>
 <td>No public org-creation endpoint, avoiding a privilege-escalation surface</td>
+</tr>
+<tr>
+<td><code>password_hash</code> in users</td>
+<td>Nullable</td>
+<td>OAuth-only users may not have a password; email+password login checks this field</td>
+</tr>
+<tr>
+<td><code>email_verified_at</code> in users</td>
+<td>Nullable timestamp</td>
+<td>NULL = account inactive/unverified; populated on email verification; enables email verification step</td>
+</tr>
+<tr>
+<td><code>oauth_identities</code> table</td>
+<td>Separate relation</td>
+<td>Links external OAuth provider identities to users; supports account linking and multi-provider SSO</td>
+</tr>
+<tr>
+<td><code>refresh_tokens</code> table</td>
+<td>Separate relation</td>
+<td>Token rotation: old tokens stored in DB; enables logout-all and detects token replay attacks (reuse_detected error)</td>
 </tr>
 </tbody>
 </table>

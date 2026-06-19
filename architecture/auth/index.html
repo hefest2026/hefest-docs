@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../api/">
+        <link rel="prev" href="../data-model/">
       
       
-        <link rel="next" href="../../criteria/grading-criteria/">
+        <link rel="next" href="../transactions/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Operations - Hefest — School Events System</title>
+        <title>Authentication - Hefest — School Events System</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#operations" class="md-skip">
+        <a href="#authentication" class="md-skip">
           Skip to content
         </a>
       
@@ -110,7 +110,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Operations
+              Authentication
             
           </span>
         </div>
@@ -511,10 +511,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../auth/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -530,6 +557,198 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Token model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#token-rotation-and-reuse-detection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token rotation and reuse detection
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#flows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Flows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Flows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-sign-up-and-email-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local sign-up and email verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-sign-in-google-microsoft" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth sign-in (Google / Microsoft)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#account-linking-rules-oauth-email-collision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account-linking rules (OAuth email collision)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cookie-and-bearer-transport" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cookie and Bearer transport
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-jwt-and-cookies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core JWT and cookies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cors-and-oauth-redirect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CORS and OAuth redirect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#google-oauth-all-or-nothing-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google OAuth (all-or-nothing group)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#microsoft-entra-oauth-all-or-nothing-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microsoft / Entra OAuth (all-or-nothing group)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security properties
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -623,37 +842,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Operations
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../operations/" class="md-nav__link">
         
   
   
@@ -669,154 +861,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#rate-limiting" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Rate limiting
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Rate limiting">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#strategy-sliding-window-with-redis-sorted-sets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Strategy: sliding window with Redis sorted sets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#limits-per-endpoint" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Limits per endpoint
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#http-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HTTP response
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deployment
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Deployment">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#local-development-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Local development (docker-compose)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#production-path" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Production path
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#scalability-notes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scalability notes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#architecture-decisions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Architecture decisions
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Architecture decisions">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#stretch-feature-only-if-time-permits" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Stretch feature (only if time permits)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -943,44 +987,33 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#rate-limiting" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Rate limiting
+        Overview
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Rate limiting">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#token-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token model
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Token model">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#strategy-sliding-window-with-redis-sorted-sets" class="md-nav__link">
+  <a href="#token-rotation-and-reuse-detection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Strategy: sliding window with Redis sorted sets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#limits-per-endpoint" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Limits per endpoint
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#http-response" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HTTP response
+        Token rotation and reuse detection
       
     </span>
   </a>
@@ -993,22 +1026,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#deployment" class="md-nav__link">
+  <a href="#flows" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Deployment
+        Flows
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Deployment">
+    <nav class="md-nav" aria-label="Flows">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#local-development-docker-compose" class="md-nav__link">
+  <a href="#local-sign-up-and-email-verification" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Local development (docker-compose)
+        Local sign-up and email verification
       
     </span>
   </a>
@@ -1016,10 +1049,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#production-path" class="md-nav__link">
+  <a href="#oauth-sign-in-google-microsoft" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Production path
+        OAuth sign-in (Google / Microsoft)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#account-linking-rules-oauth-email-collision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Account-linking rules (OAuth email collision)
       
     </span>
   </a>
@@ -1032,10 +1076,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#scalability-notes" class="md-nav__link">
+  <a href="#cookie-and-bearer-transport" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Scalability notes
+        Cookie and Bearer transport
       
     </span>
   </a>
@@ -1043,22 +1087,55 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#architecture-decisions" class="md-nav__link">
+  <a href="#configuration-reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Architecture decisions
+        Configuration reference
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Architecture decisions">
+    <nav class="md-nav" aria-label="Configuration reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#stretch-feature-only-if-time-permits" class="md-nav__link">
+  <a href="#core-jwt-and-cookies" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Stretch feature (only if time permits)
+        Core JWT and cookies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cors-and-oauth-redirect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CORS and OAuth redirect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#google-oauth-all-or-nothing-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google OAuth (all-or-nothing group)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#microsoft-entra-oauth-all-or-nothing-group" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Microsoft / Entra OAuth (all-or-nothing group)
       
     </span>
   </a>
@@ -1067,6 +1144,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security properties
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1090,236 +1178,296 @@
   
 
 
-<h1 id="operations">Operations<a class="headerlink" href="#operations" title="Permanent link">&para;</a></h1>
-<p>Covers rate limiting, deployment, scalability, and architecture decisions.</p>
-<hr />
-<h2 id="rate-limiting">Rate limiting<a class="headerlink" href="#rate-limiting" title="Permanent link">&para;</a></h2>
+<h1 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>Covers:</strong> <a href="../../criteria/grading-criteria/#security-15-points">S2</a> — protects <code>/login</code> and <code>/register</code> against brute-force and account-creation spam; uses Redis already in the stack.</p>
+<p><strong>Covers:</strong> <a href="../../criteria/grading-criteria/#security-15-points">S1</a> (password hashing) · <a href="../../criteria/grading-criteria/#security-15-points">S2</a> (input validation + rate limiting) · <a href="../../criteria/grading-criteria/#security-15-points">S3</a> (authorization) · <a href="../../criteria/grading-criteria/#scalability-design-15-points">SC3</a> (stateless horizontal scaling)</p>
 </blockquote>
-<h3 id="strategy-sliding-window-with-redis-sorted-sets">Strategy: sliding window with Redis sorted sets<a class="headerlink" href="#strategy-sliding-window-with-redis-sorted-sets" title="Permanent link">&para;</a></h3>
-<p>A sliding window is more accurate than a fixed window. It counts requests within the last <em>N</em> seconds relative to <em>now</em>, so there is no burst problem at window boundaries.</p>
-<p>Each request adds a timestamped entry to a Redis sorted set keyed by endpoint and identifier. Entries older than the window are pruned on every check. The operation is atomic via a Redis pipeline:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">redis</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">check_rate_limit</span><span class="p">(</span><span class="n">r</span><span class="p">:</span> <span class="n">redis</span><span class="o">.</span><span class="n">Redis</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">window_seconds</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns (is_limited, retry_after_seconds).&quot;&quot;&quot;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">window_start</span> <span class="o">=</span> <span class="n">now</span> <span class="o">-</span> <span class="n">window_seconds</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">pipe</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">zremrangebyscore</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">window_start</span><span class="p">)</span>   <span class="c1"># drop entries outside window</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">zadd</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="n">now</span><span class="p">):</span> <span class="n">now</span><span class="p">})</span>               <span class="c1"># record this request</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">zcard</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>                               <span class="c1"># count requests in window</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">pipe</span><span class="o">.</span><span class="n">expire</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">window_seconds</span><span class="p">)</span>              <span class="c1"># auto-cleanup idle keys</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">:</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="n">oldest</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">zrange</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">withscores</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        <span class="n">retry_after</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">window_seconds</span> <span class="o">-</span> <span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">oldest</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">retry_after</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="mi">0</span>
-</code></pre></div>
-<p><strong>Redis key pattern:</strong> <code>hefest:ratelimit:{endpoint_tag}:{identifier}</code></p>
-<h3 id="limits-per-endpoint">Limits per endpoint<a class="headerlink" href="#limits-per-endpoint" title="Permanent link">&para;</a></h3>
+<hr />
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Hefest issues a short-lived <strong>access token</strong> (stateless JWT) plus a long-lived <strong>rotating refresh token</strong> (opaque, stored hashed in Postgres). Users authenticate with email + password, Sign in with Google, or Sign in with Microsoft (Entra ID — for <code>edu.mon.bg</code> government education accounts). In every case the backend mints <strong>its own</strong> token pair; the provider's tokens are never used to call the Hefest API.</p>
+<p><strong>Email verification gates local accounts.</strong> A local registration is inactive until the email is confirmed. An OAuth sign-in is proof of email ownership, so SSO users are active immediately.</p>
+<p><strong>OAuth providers are individually toggleable.</strong> A provider is enabled only when its config is present; running with no OAuth apps set up is the default. Email/password auth always works. <code>GET /auth/providers</code> tells the frontend which login options to render, marking unconfigured providers as <code>available: false</code> rather than hiding them.</p>
+<p>Auth lives inside the <code>api</code> process. Token validation is stateless in-process JWT decoding on every request; token issuance is low-frequency. The API scales horizontally by running more replicas.</p>
+<hr />
+<h2 id="token-model">Token model<a class="headerlink" href="#token-model" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Endpoint</th>
-<th>Identifier</th>
-<th>Limit</th>
-<th>Window</th>
-<th>Reason</th>
+<th>Token</th>
+<th>Type</th>
+<th>Lifetime</th>
+<th>Storage</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>POST /login</code></td>
-<td>IP address</td>
-<td>10 requests</td>
-<td>60 s</td>
-<td>Brute-force credential guessing</td>
+<td>Access</td>
+<td>JWT HS256 (<code>HEFEST_JWT_SECRET</code>)</td>
+<td><strong>15 min</strong></td>
+<td>None (stateless) — claims: <code>sub</code>, <code>role</code>, <code>iss="hefest"</code>, <code>aud="hefest-api"</code>, <code>iat</code>, <code>exp</code>, <code>type="access"</code></td>
 </tr>
 <tr>
-<td><code>POST /register</code></td>
-<td>IP address</td>
-<td>5 requests</td>
-<td>3600 s</td>
-<td>Account creation spam</td>
+<td>Refresh</td>
+<td>Opaque random (<code>secrets.token_urlsafe(32)</code>)</td>
+<td><strong>14 days</strong></td>
+<td>Postgres <code>refresh_tokens</code>, <strong>SHA-256 hash only</strong> — single-use, rotated on every refresh</td>
 </tr>
 <tr>
-<td><code>POST /auth/refresh</code></td>
-<td>IP address</td>
-<td>20 requests</td>
-<td>60 s</td>
-<td>Refresh token brute-force / rotation abuse</td>
-</tr>
-<tr>
-<td><code>POST /events/{id}/registrations</code></td>
-<td>User ID (from JWT)</td>
-<td>30 requests</td>
-<td>60 s</td>
-<td>Registration spam across events</td>
+<td>Email-verify</td>
+<td>JWT HS256</td>
+<td><strong>24 h</strong></td>
+<td>None (stateless) — claims: <code>sub</code>, <code>aud="hefest-verify"</code>, <code>exp</code>, <code>type="email_verify"</code> — embedded in the verification link</td>
 </tr>
 </tbody>
 </table>
-<p>Global fallback (all routes): 200 requests / 60 s per IP.</p>
-<h3 id="http-response">HTTP response<a class="headerlink" href="#http-response" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">429</span> <span class="ne">Too Many Requests</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="na">Retry-After</span><span class="o">:</span> <span class="l">42</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="na">Content-Type</span><span class="o">:</span> <span class="l">application/json</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">{</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Too many requests. Please retry after 42 seconds.&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="nt">&quot;code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;rate_limit_exceeded&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
-</code></pre></div>
-<p>Rate limiting is implemented as a <strong>FastAPI middleware</strong> so it applies before any route handler runs. The middleware extracts the identifier (IP from <code>X-Forwarded-For</code> or <code>request.client.host</code>; user ID from the JWT if present), runs the Redis pipeline check, and returns <code>429</code> immediately if limited.</p>
-<div class="admonition note">
-<p class="admonition-title">IP extraction behind nginx</p>
-<p>In the docker-compose setup, nginx sits in front of the API. Configure nginx to pass <code>X-Forwarded-For</code> and trust only the nginx container's IP in FastAPI (<code>--proxy-headers --forwarded-allow-ips</code>). Without this, all requests appear to come from the nginx container IP and rate limiting by IP breaks.</p>
-</div>
+<p><strong>Why opaque + SHA-256 for refresh (not JWT, not bcrypt):</strong> refresh tokens are high-entropy random strings, so a fast SHA-256 is safe at rest and allows an indexed lookup by hash. bcrypt would force a table scan. The opaque token carries no claims and is meaningless if leaked from the DB.</p>
+<p><strong><code>aud</code> claim:</strong> access tokens use <code>aud="hefest-api"</code>; the verify-email JWT uses <code>aud="hefest-verify"</code> so a verification link can never be replayed as an API token.</p>
+<p><strong>HS256 vs RS256:</strong> HS256 is correct here because auth and the API are colocated. If a separate service ever needs to verify tokens without being able to forge them, migrate to RS256/ES256 with a published public key (algorithm is config, not a code rewrite).</p>
+<h3 id="token-rotation-and-reuse-detection">Token rotation and reuse detection<a class="headerlink" href="#token-rotation-and-reuse-detection" title="Permanent link">&para;</a></h3>
+<p>Every <code>POST /auth/refresh</code> atomically invalidates the presented token and issues a fresh pair.</p>
+<p>If an already-revoked token is presented to <code>/auth/refresh</code>, that token was stolen and replayed after the legitimate client already rotated it. The whole family is revoked and a <code>401 token_reuse_detected</code> is returned, forcing a fresh login everywhere (RFC 6819).</p>
 <hr />
-<h2 id="deployment">Deployment<a class="headerlink" href="#deployment" title="Permanent link">&para;</a></h2>
-<h3 id="local-development-docker-compose">Local development (docker-compose)<a class="headerlink" href="#local-development-docker-compose" title="Permanent link">&para;</a></h3>
-<p><code>docker-compose up</code> starts all services. Migrations run automatically on API startup via an entrypoint script.</p>
-<pre class="mermaid"><code>flowchart TB
-    subgraph compose["docker-compose (local dev)"]
-        nginx["nginx:alpine\n:8080 (public)\nroutes /notification-jobs/* → worker-api\neverything else → api"]
-        api["hefest-api\n:8000"]
-        relay["hefest-relay\n(same image, relay entrypoint)"]
-        worker["hefest-worker\n(hefest-api image, worker entrypoint)\n+ worker loop"]
-        pg["postgres:16\n:5432"]
-        redis["redis:7-alpine\n:6379"]
-        mailpit["mailpit\n:8025 (web UI)\n:1025 (SMTP)"]
-    end
+<h2 id="flows">Flows<a class="headerlink" href="#flows" title="Permanent link">&para;</a></h2>
+<h3 id="local-sign-up-and-email-verification">Local sign-up and email verification<a class="headerlink" href="#local-sign-up-and-email-verification" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant C as Client (SPA)
+    participant A as API
+    participant DB as Postgres
+    participant M as Mail (Mailpit/Resend)
 
-    nginx --&gt; api
-    nginx --&gt; worker
-    api --&gt; pg
-    api --&gt; redis
-    relay --&gt; pg
-    relay --&gt; redis
-    worker --&gt; redis
-    worker --&gt; pg
-    worker --&gt; mailpit</code></pre>
-<h3 id="production-path">Production path<a class="headerlink" href="#production-path" title="Permanent link">&para;</a></h3>
-<p>Production deployment targets Kubernetes via a minimal Helm chart. The same Docker images are used; configuration is injected via <code>values.yaml</code>. Managed Postgres (e.g., RDS, CloudSQL) and managed Redis (e.g., ElastiCache) replace the in-compose containers.</p>
-<p>Scaling levers available by design:</p>
-<ul>
-<li><strong>API</strong>: stateless — scale horizontally by increasing replica count</li>
-<li><strong>Worker</strong>: Redis Streams consumer groups distribute messages across multiple worker replicas automatically</li>
-<li><strong>Relay</strong>: single instance is sufficient; if relay throughput becomes a bottleneck, partition by <code>event_id</code> range across multiple relay instances</li>
-</ul>
-<hr />
-<h2 id="scalability-notes">Scalability notes<a class="headerlink" href="#scalability-notes" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p><strong>Covers:</strong> <a href="../../criteria/grading-criteria/#scalability-design-15-points">SC1</a> · <a href="../../criteria/grading-criteria/#scalability-design-15-points">SC2</a> · <a href="../../criteria/grading-criteria/#scalability-design-15-points">SC3</a></p>
-</blockquote>
-<p>The current design was intentionally kept minimal (Postgres outbox + Redis Streams rather than a dedicated message broker like RabbitMQ or Kafka). This is sufficient for school-event scale and keeps the demo simple.</p>
+    C-&gt;&gt;A: POST /register (email, password, full_name)
+    A-&gt;&gt;DB: INSERT user (email_verified_at=NULL) + outbox row (same txn)
+    A--&gt;&gt;C: 201 { "message": "check your email" }
+    Note over A,M: relay picks up outbox → email sent
+    M--&gt;&gt;C: Verification email with link
+    C-&gt;&gt;A: POST /auth/verify-email { token }
+    A-&gt;&gt;DB: SET email_verified_at=now() (idempotent)
+    A--&gt;&gt;C: 200 + access token (body) + refresh token (cookie)</code></pre>
+<div class="admonition note">
+<p class="admonition-title">Dev shortcut</p>
+<p>When <code>HEFEST_ENV=dev</code>, <code>POST /register</code> also returns a <code>verify_token</code> field directly in the response so the flow can be exercised without a running mail server. This field is <strong>never present</strong> in staging or production.</p>
+</div>
+<h3 id="oauth-sign-in-google-microsoft">OAuth sign-in (Google / Microsoft)<a class="headerlink" href="#oauth-sign-in-google-microsoft" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant C as Client (SPA)
+    participant A as API
+    participant P as OAuth Provider
+    participant DB as Postgres
+
+    C-&gt;&gt;A: GET /auth/{provider}/login
+    A--&gt;&gt;C: 302 → provider consent screen
+    C-&gt;&gt;P: User consents
+    P--&gt;&gt;A: GET /auth/{provider}/callback?code=…
+    A-&gt;&gt;P: Exchange code → OpenID identity
+    A-&gt;&gt;DB: find_or_create_oauth_user (see account-link rules)
+    A--&gt;&gt;C: 302 → frontend_oauth_success_url#access_token=…
+    Note over C: SPA reads token, calls replaceState() to scrub fragment</code></pre>
+<p>The SPA <strong>must</strong> call <code>window.history.replaceState()</code> immediately after reading the token from the URL fragment to prevent it leaking via browser history or screen-share.</p>
+<h3 id="account-linking-rules-oauth-email-collision">Account-linking rules (OAuth email collision)<a class="headerlink" href="#account-linking-rules-oauth-email-collision" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Concern</th>
-<th>Current approach</th>
-<th>Scaling path</th>
+<th>Existing user state</th>
+<th>Action</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Queue latency</td>
-<td>LISTEN/NOTIFY push + outbox fallback poll (5 s)</td>
-<td>Broker-grade latency, no broker; partition relay by <code>event_id</code> if a single LISTEN connection saturates</td>
+<td>No user with that email</td>
+<td>Create new <code>student</code> user (<code>email_verified_at = now()</code>) + identity row</td>
 </tr>
 <tr>
-<td>Worker parallelism</td>
-<td>Single worker process</td>
-<td>Redis consumer groups → add worker replicas</td>
+<td>Verified local user (<code>email_verified_at IS NOT NULL</code>)</td>
+<td>Auto-link: add an <code>oauth_identities</code> row to the existing user</td>
 </tr>
 <tr>
-<td>Read throughput</td>
-<td>Postgres with covering indexes</td>
-<td>Add read replicas; cache static event metadata (not counts)</td>
-</tr>
-<tr>
-<td>Registration hotspot</td>
-<td>Row-level lock on event</td>
-<td>Advisory lock per event_id for even lower contention at scale</td>
-</tr>
-<tr>
-<td>Notifications</td>
-<td>At-least-once SMTP</td>
-<td>Switch to Resend (already in production stack) for higher deliverability and send-rate limits</td>
+<td>Unverified local user (<code>email_verified_at IS NULL</code>)</td>
+<td>Take over the dormant row — set <code>email_verified_at = now()</code>, <code>password_hash = NULL</code>, update name; the original registrant never proved ownership, so no access is lost</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">Do not cache registration counts</p>
-<p>The confirmed seat count is used in the no-overbooking transaction and must always be read from Postgres under a lock. Caching it would silently break the overbooking guarantee.</p>
+<hr />
+<h2 id="cookie-and-bearer-transport">Cookie and Bearer transport<a class="headerlink" href="#cookie-and-bearer-transport" title="Permanent link">&para;</a></h2>
+<p><strong>Web (default):</strong> access token in the JSON response body (SPA holds it in memory); refresh token in a <code>Secure; HttpOnly; SameSite=Strict; Path=/auth</code> cookie — not JS-readable, so XSS cannot exfiltrate it.</p>
+<p><strong>Mobile (future):</strong> the refresh endpoint already reads the token from <strong>cookie or body</strong>; a future mobile client can pass <code>X-Auth-Transport: bearer</code> on login to receive the refresh token in the body instead.</p>
+<hr />
+<h2 id="configuration-reference">Configuration reference<a class="headerlink" href="#configuration-reference" title="Permanent link">&para;</a></h2>
+<p>All variables use the <code>HEFEST_</code> prefix. Secrets live only in <code>.env</code> (gitignored) and are never logged.</p>
+<h3 id="core-jwt-and-cookies">Core JWT and cookies<a class="headerlink" href="#core-jwt-and-cookies" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Required?</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HEFEST_JWT_SECRET</code></td>
+<td><strong>yes (prod)</strong></td>
+<td><code>change-me-in-production</code></td>
+<td>HS256 signing key for access and verify JWTs</td>
+</tr>
+<tr>
+<td><code>HEFEST_JWT_ALGORITHM</code></td>
+<td>no</td>
+<td><code>HS256</code></td>
+<td>Signing algorithm; switch point for RS256 path</td>
+</tr>
+<tr>
+<td><code>HEFEST_JWT_AUDIENCE</code></td>
+<td>no</td>
+<td><code>hefest-api</code></td>
+<td>Validated <code>aud</code> on every access token</td>
+</tr>
+<tr>
+<td><code>HEFEST_JWT_EXPIRE_MINUTES</code></td>
+<td>no</td>
+<td><code>15</code></td>
+<td>Access-token lifetime in minutes</td>
+</tr>
+<tr>
+<td><code>HEFEST_REFRESH_TOKEN_EXPIRE_DAYS</code></td>
+<td>no</td>
+<td><code>14</code></td>
+<td>Refresh-token lifetime in days</td>
+</tr>
+<tr>
+<td><code>HEFEST_EMAIL_VERIFY_EXPIRE_HOURS</code></td>
+<td>no</td>
+<td><code>24</code></td>
+<td>Verification-link lifetime in hours</td>
+</tr>
+<tr>
+<td><code>HEFEST_REFRESH_COOKIE_NAME</code></td>
+<td>no</td>
+<td><code>hefest_refresh</code></td>
+<td>Name of the httpOnly refresh cookie</td>
+</tr>
+<tr>
+<td><code>HEFEST_REFRESH_COOKIE_SECURE</code></td>
+<td>no</td>
+<td><code>true</code></td>
+<td>Set <code>false</code> only for local http dev</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cors-and-oauth-redirect">CORS and OAuth redirect<a class="headerlink" href="#cors-and-oauth-redirect" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Required?</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HEFEST_CORS_ORIGINS</code></td>
+<td>web SPA</td>
+<td><code>[]</code></td>
+<td>Allowed browser origins (credentials mode)</td>
+</tr>
+<tr>
+<td><code>HEFEST_FRONTEND_OAUTH_SUCCESS_URL</code></td>
+<td>OAuth only</td>
+<td><code>""</code></td>
+<td>302 target after a successful OAuth login</td>
+</tr>
+</tbody>
+</table>
+<h3 id="google-oauth-all-or-nothing-group">Google OAuth (all-or-nothing group)<a class="headerlink" href="#google-oauth-all-or-nothing-group" title="Permanent link">&para;</a></h3>
+<p>Setting any one of these without the others leaves Google <strong>disabled</strong>. Leave the group blank to run without Google.</p>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HEFEST_GOOGLE_CLIENT_ID</code></td>
+<td>Google OAuth client ID — <strong>enables Google</strong> when all three are set</td>
+</tr>
+<tr>
+<td><code>HEFEST_GOOGLE_CLIENT_SECRET</code></td>
+<td>Google OAuth client secret</td>
+</tr>
+<tr>
+<td><code>HEFEST_GOOGLE_REDIRECT_URI</code></td>
+<td>Must exactly match the Google console (trailing slash matters)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="microsoft-entra-oauth-all-or-nothing-group">Microsoft / Entra OAuth (all-or-nothing group)<a class="headerlink" href="#microsoft-entra-oauth-all-or-nothing-group" title="Permanent link">&para;</a></h3>
+<p>Restricts sign-in to the <code>edu.mon.bg</code> Entra tenant. Leave the group blank to run without Microsoft.</p>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HEFEST_MICROSOFT_CLIENT_ID</code></td>
+<td>Entra app client ID — <strong>enables Microsoft</strong> when all four are set</td>
+</tr>
+<tr>
+<td><code>HEFEST_MICROSOFT_CLIENT_SECRET</code></td>
+<td>Entra app client secret</td>
+</tr>
+<tr>
+<td><code>HEFEST_MICROSOFT_TENANT</code></td>
+<td><code>edu.mon.bg</code> Entra tenant ID</td>
+</tr>
+<tr>
+<td><code>HEFEST_MICROSOFT_REDIRECT_URI</code></td>
+<td>Must exactly match the Azure console</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition tip">
+<p class="admonition-title">Running without OAuth</p>
+<p>Leave both OAuth groups blank. Local password auth is always on. <code>GET /auth/providers</code> returns both providers with <code>available: false</code> so the frontend can render them as greyed-out buttons.</p>
 </div>
 <hr />
-<h2 id="architecture-decisions">Architecture decisions<a class="headerlink" href="#architecture-decisions" title="Permanent link">&para;</a></h2>
-<p>Decisions made during the brainstorming session on 2026-06-16. Status: <strong>Approved</strong>.</p>
+<h2 id="security-properties">Security properties<a class="headerlink" href="#security-properties" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>#</th>
-<th>Decision</th>
-<th>Resolution</th>
+<th>Criterion</th>
+<th>What the design does</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>1</td>
-<td><code>ends_at</code> requirement</td>
-<td><strong>Nullable</strong> — supports single-datetime events; can be tightened later without a breaking change.</td>
+<td><strong>S1</strong> — password hashing</td>
+<td><code>bcrypt</code> cost factor 12; <code>password_hash</code> nullable for OAuth-only users; minimum password length ≥ 12</td>
 </tr>
 <tr>
-<td>2</td>
-<td>Re-register after cancelling</td>
-<td><strong>Allowed</strong> — the partial unique index already permits it; a hard block would add needless code.</td>
+<td><strong>S2</strong> — input validation</td>
+<td>All auth inputs validated via Pydantic v2; rate limiting on <code>/login</code>, <code>/register</code>, <code>/auth/refresh</code> (see <a href="../operations/#rate-limiting">Operations</a>)</td>
 </tr>
 <tr>
-<td>3</td>
-<td>Organizer account creation</td>
-<td><strong>Seed script</strong> (documented in README). No public org-creation endpoint, avoiding a privilege-escalation surface.</td>
+<td><strong>S3</strong> — authorization</td>
+<td><code>get_current_user</code> + <code>require_role</code> on every protected route; 15-min access tokens with validated <code>aud</code>; refresh tokens revocable individually or all-at-once; unverified accounts cannot authenticate</td>
 </tr>
 <tr>
-<td>4</td>
-<td>Student cancellation window</td>
-<td><strong>Allowed until <code>starts_at</code></strong> — a later attempt returns <code>409 / event_already_started</code>.</td>
+<td><strong>SC3</strong> — horizontal scaling</td>
+<td>Access-token validation is stateless in-process JWT decoding; refresh state is in shared Postgres reachable by all replicas</td>
 </tr>
 <tr>
-<td>5</td>
-<td>Worker placement</td>
-<td><strong>Same repo as API</strong> — the worker lives in <code>hefest-api</code> under <code>hefest/worker/</code>, sharing the same Docker image with a different entrypoint. redis-py, asyncpg, and aiosmtplib are added as dependencies of <code>hefest-api</code>. No separate repo or image.</td>
+<td><strong>Browser security</strong></td>
+<td>Refresh token in <code>HttpOnly; Secure; SameSite=Strict</code> cookie (XSS-proof); access token held in memory; CORS locked to explicit <code>HEFEST_CORS_ORIGINS</code></td>
 </tr>
 <tr>
-<td>6</td>
-<td>Health/readiness endpoints</td>
-<td><strong>Implemented</strong> — <code>/health</code> and <code>/ready</code>.</td>
-</tr>
-<tr>
-<td>7</td>
-<td>Relay: poll vs. push (HEF-16)</td>
-<td><strong>LISTEN/NOTIFY push + fallback poll</strong> — trigger fires <code>pg_notify</code> at COMMIT for ~ms latency; long-interval poll preserves at-least-once durability.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="stretch-feature-only-if-time-permits">Stretch feature (only if time permits)<a class="headerlink" href="#stretch-feature-only-if-time-permits" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Feature</th>
-<th>Plan</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>EventCancelled</code> notifications</td>
-<td>A bonus domain event. Mechanism is already settled: one <strong>bulk</strong> job carrying <code>event_id</code>; the worker queries the affected registrations and sends one email per user.</td>
+<td><strong>Secrets</strong></td>
+<td><code>JWT_SECRET</code>, OAuth client secrets live only in <code>.env</code> (gitignored); never logged</td>
 </tr>
 </tbody>
 </table>

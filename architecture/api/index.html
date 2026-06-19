@@ -514,6 +514,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Authentication
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../transactions/" class="md-nav__link">
         
   
@@ -637,6 +665,45 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#credentials-based-auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials-based auth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-sso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth / SSO
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -872,6 +939,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#credentials-based-auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Credentials-based auth
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#token-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token management
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oauth-sso" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OAuth / SSO
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -967,6 +1073,49 @@
 <p>All protected routes require <code>Authorization: Bearer &lt;token&gt;</code>.</p>
 <hr />
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
+<h3 id="credentials-based-auth">Credentials-based auth<a class="headerlink" href="#credentials-based-auth" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+<th>Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/providers</code></td>
+<td>Public</td>
+<td>List available login methods (SSO availability)</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/register</code></td>
+<td>Public</td>
+<td>Create unverified student account (organizers via seed script — see README)</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S2</a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/auth/verify-email</code></td>
+<td>Public</td>
+<td>Verify email link token; activate account; issue tokens</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/login</code></td>
+<td>Public</td>
+<td>Email+password login (403 <code>email_not_verified</code> if unverified)</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="token-management">Token management<a class="headerlink" href="#token-management" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -980,20 +1129,74 @@
 <tbody>
 <tr>
 <td><code>POST</code></td>
-<td><code>/register</code></td>
+<td><code>/auth/refresh</code></td>
 <td>Public</td>
-<td>Create student account (organizers via seed script — see README)</td>
-<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S2</a></td>
+<td>Rotate refresh token (cookie or body); 401 <code>token_reuse_detected</code> on replay</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a></td>
 </tr>
 <tr>
 <td><code>POST</code></td>
-<td><code>/login</code></td>
+<td><code>/auth/logout</code></td>
 <td>Public</td>
-<td>Returns JWT</td>
+<td>Revoke refresh token; clear cookie</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/auth/logout-all</code></td>
+<td>Public</td>
+<td>Revoke all refresh tokens for user (accepts Bearer or refresh token)</td>
 <td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#security-15-points">S1</a></td>
 </tr>
 </tbody>
 </table>
+<h3 id="oauth-sso">OAuth / SSO<a class="headerlink" href="#oauth-sso" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Role</th>
+<th>Description</th>
+<th>Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/google/login</code></td>
+<td>Public</td>
+<td>Initiate Google OAuth flow</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#additional-features-25-points">A1</a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/google/callback</code></td>
+<td>Public</td>
+<td>Complete Google OAuth; 302 to frontend</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#additional-features-25-points">A1</a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/microsoft/login</code></td>
+<td>Public</td>
+<td>Initiate Microsoft/Entra OAuth flow</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#additional-features-25-points">A1</a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/auth/microsoft/callback</code></td>
+<td>Public</td>
+<td>Complete Microsoft OAuth; 302 to frontend</td>
+<td><a href="../../criteria/grading-criteria/#functionality-40-points">F1</a> · <a href="../../criteria/grading-criteria/#additional-features-25-points">A1</a></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Notes:</strong>
+- SSO availability is exposed via <code>/auth/providers</code>, NOT <code>/health</code> or <code>/ready</code>
+- Access token TTL: 15 minutes
+- Refresh token: httpOnly cookie (<code>hefest_refresh</code>), 14 days
+- Disabled SSO providers return <code>404 sso_provider_disabled</code></p>
 <hr />
 <h2 id="events">Events<a class="headerlink" href="#events" title="Permanent link">&para;</a></h2>
 <table>
