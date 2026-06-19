@@ -46,6 +46,7 @@ def check_rate_limit(r: redis.Redis, key: str, limit: int, window_seconds: int) 
 |---|---|---|---|---|
 | `POST /login` | IP address | 10 requests | 60 s | Brute-force credential guessing |
 | `POST /register` | IP address | 5 requests | 3600 s | Account creation spam |
+| `POST /auth/refresh` | IP address | 20 requests | 60 s | Refresh token brute-force / rotation abuse |
 | `POST /events/{id}/registrations` | User ID (from JWT) | 30 requests | 60 s | Registration spam across events |
 
 Global fallback (all routes): 200 requests / 60 s per IP.

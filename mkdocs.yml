@@ -47,6 +47,7 @@ nav:
   - Architecture:
       - Overview: architecture/index.md
       - Data Model: architecture/data-model.md
+      - Authentication: architecture/auth.md
       - Transactions: architecture/transactions.md
       - Notification Pipeline: architecture/pipeline.md
       - API Reference: architecture/api.md
