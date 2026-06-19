@@ -62,7 +62,7 @@ The relay decouples outbox-polling from email-sending. The API writes to Postgre
 | ORM | Tortoise ORM | Async-native, fits FastAPI's async model |
 | Migrations | Tortoise ORM built-in (`tortoise` CLI) | `makemigrations` / `migrate` / `downgrade` built in since v1.0; Aerich is no longer maintained |
 | Validation | Pydantic v2 | Request/response schemas, type-safe DTOs |
-| Auth | JWT (python-jose + passlib bcrypt) | Stateless, bcrypt for password hashing |
+| Auth | JWT (python-jose + passlib bcrypt) + fastapi-sso | access-stateless · refresh-stateful · email-verified |
 | Database | PostgreSQL 16 | Relational, transactional, supports `FOR UPDATE` and partial indexes |
 | Queue | Redis 7 (Streams) | Low-latency async delivery; consumer groups for multi-worker load sharing |
 | Worker email | redis-py · asyncpg · aiosmtplib | Redis consumer, Postgres writes, async SMTP |

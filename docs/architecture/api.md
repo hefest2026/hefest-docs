@@ -8,10 +8,37 @@ All protected routes require `Authorization: Bearer <token>`.
 
 ## Authentication
 
+### Credentials-based auth
+
 | Method | Path | Role | Description | Criteria |
 |---|---|---|---|---|
-| `POST` | `/register` | Public | Create student account (organizers via seed script — see README) | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) · [S2](../criteria/grading-criteria.md#security-15-points) |
-| `POST` | `/login` | Public | Returns JWT | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) |
+| `GET` | `/auth/providers` | Public | List available login methods (SSO availability) | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/register` | Public | Create unverified student account (organizers via seed script — see README) | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) · [S2](../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/auth/verify-email` | Public | Verify email link token; activate account; issue tokens | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/login` | Public | Email+password login (403 `email_not_verified` if unverified) | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) |
+
+### Token management
+
+| Method | Path | Role | Description | Criteria |
+|---|---|---|---|---|
+| `POST` | `/auth/refresh` | Public | Rotate refresh token (cookie or body); 401 `token_reuse_detected` on replay | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/auth/logout` | Public | Revoke refresh token; clear cookie | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) |
+| `POST` | `/auth/logout-all` | Public | Revoke all refresh tokens for user (accepts Bearer or refresh token) | [F1](../criteria/grading-criteria.md#functionality-40-points) · [S1](../criteria/grading-criteria.md#security-15-points) |
+
+### OAuth / SSO
+
+| Method | Path | Role | Description | Criteria |
+|---|---|---|---|---|
+| `GET` | `/auth/google/login` | Public | Initiate Google OAuth flow | [F1](../criteria/grading-criteria.md#functionality-40-points) · [A1](../criteria/grading-criteria.md#additional-features-25-points) |
+| `GET` | `/auth/google/callback` | Public | Complete Google OAuth; 302 to frontend | [F1](../criteria/grading-criteria.md#functionality-40-points) · [A1](../criteria/grading-criteria.md#additional-features-25-points) |
+| `GET` | `/auth/microsoft/login` | Public | Initiate Microsoft/Entra OAuth flow | [F1](../criteria/grading-criteria.md#functionality-40-points) · [A1](../criteria/grading-criteria.md#additional-features-25-points) |
+| `GET` | `/auth/microsoft/callback` | Public | Complete Microsoft OAuth; 302 to frontend | [F1](../criteria/grading-criteria.md#functionality-40-points) · [A1](../criteria/grading-criteria.md#additional-features-25-points) |
+
+**Notes:**
+- SSO availability is exposed via `/auth/providers`, NOT `/health` or `/ready`
+- Access token TTL: 15 minutes
+- Refresh token: httpOnly cookie (`hefest_refresh`), 14 days
+- Disabled SSO providers return `404 sso_provider_disabled`
 
 ---
 

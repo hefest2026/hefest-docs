@@ -11,9 +11,10 @@ erDiagram
     users {
         uuid id PK
         text email UK
-        text password_hash
+        text password_hash "nullable"
         text full_name
         text role "student | organizer"
+        timestamptz email_verified_at "nullable"
         timestamptz created_at
     }
     events {
@@ -54,9 +55,27 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
+    oauth_identities {
+        uuid id PK
+        uuid user_id FK
+        text provider "google | microsoft"
+        text subject
+        text email
+        timestamptz created_at
+    }
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        text token_hash UK
+        timestamptz expires_at
+        timestamptz revoked_at "nullable"
+        timestamptz created_at
+    }
 
     users ||--o{ events : "organizes"
     users ||--o{ registrations : "makes"
+    users ||--o{ oauth_identities : "has"
+    users ||--o{ refresh_tokens : "has"
     events ||--o{ registrations : "has"
     events ||--o{ notification_jobs : "triggers"
 ```
@@ -76,6 +95,15 @@ CREATE UNIQUE INDEX uq_one_active_registration_per_student
 -- Enforced at the DB level as a backstop behind the application check.
 ALTER TABLE notification_log
     ADD CONSTRAINT uq_notification_log_key UNIQUE (idempotency_key);
+
+-- OAuth identities: one provider-subject pair per user.
+-- A user may link multiple OAuth providers; provider + subject combo uniquely identifies a user across that provider.
+CREATE UNIQUE INDEX uq_oauth_provider_subject
+    ON oauth_identities (provider, subject);
+
+-- Refresh tokens: token hash stored (not the token itself; hashed like passwords).
+CREATE UNIQUE INDEX uq_refresh_token_hash
+    ON refresh_tokens (token_hash);
 ```
 
 These are declared natively in Tortoise ORM model `Meta` using `UniqueConstraint(condition=...)` (available since Tortoise ORM v1.1.4), so `makemigrations` tracks them automatically without `RunSQL`.
@@ -120,3 +148,7 @@ Partial indexes are declared using `PartialIndex(condition={...})` in model `Met
 | `ends_at` | Nullable | Supports single-datetime events; can be tightened later without a breaking change |
 | Re-register after cancelling | Allowed | The partial unique index already permits it; a hard block would add needless code |
 | Organizer account creation | Seed script (documented in README) | No public org-creation endpoint, avoiding a privilege-escalation surface |
+| `password_hash` in users | Nullable | OAuth-only users may not have a password; email+password login checks this field |
+| `email_verified_at` in users | Nullable timestamp | NULL = account inactive/unverified; populated on email verification; enables email verification step |
+| `oauth_identities` table | Separate relation | Links external OAuth provider identities to users; supports account linking and multi-provider SSO |
+| `refresh_tokens` table | Separate relation | Token rotation: old tokens stored in DB; enables logout-all and detects token replay attacks (reuse_detected error) |
