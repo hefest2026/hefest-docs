@@ -197,7 +197,7 @@ All under the `auth` router. Errors use the project envelope `{ "detail", "code"
 | Method | Path | Auth | Behavior |
 |---|---|---|---|
 | `GET`  | `/auth/providers` | public | Frontend capability discovery — which login methods are available (see below). |
-| `POST` | `/register` | public | Create **unverified** student (hash password, `email_verified_at=NULL`) + enqueue verification email (outbox, same transaction). Returns **201, no tokens**. |
+| `POST` | `/register` | public | Create **unverified** student (hash password, `email_verified_at=NULL`) + enqueue verification email (outbox, same transaction). Returns **201, no tokens**. In `HEFEST_ENV=dev` the response also includes a `verify_token` field for local testing — **never present in any other environment** (see implementation note below). |
 | `POST` | `/auth/verify-email` | verify JWT (link) | Decode the `email_verify` JWT; set `email_verified_at=now()` (idempotent). Activates the account. |
 | `POST` | `/login` | public | Verify bcrypt password. If `email_verified_at IS NULL` → `403 email_not_verified`. Else issue access (JSON) + refresh (cookie **or** body per transport, §5). |
 | `POST` | `/auth/refresh` | refresh token (cookie or body) | Look up by SHA-256 hash. **Atomic** guarded update `… SET revoked_at=now() WHERE id=? AND revoked_at IS NULL`; if it updated a row → issue new pair. If the row exists but was **already revoked** → reuse detected: revoke the whole family, `401 token_reuse_detected`. |
@@ -210,6 +210,24 @@ All under the `auth` router. Errors use the project envelope `{ "detail", "code"
 
 The `*/login` and `*/callback` pairs share one generic implementation (§5) — only the SSO client and
 `provider` literal differ.
+
+**Implementation note — `verify_token` in `/register` response (dev only):**
+
+Until the notification pipeline delivers verification emails, `POST /register` exposes the
+`email_verify` JWT directly in the response body — **exclusively when `HEFEST_ENV=dev`**:
+
+```json
+{
+  "message": "registered; check your email to verify your account",
+  "verify_token": "eyJ..."   ← only present when HEFEST_ENV=dev
+}
+```
+
+The gate is `if settings.env == "dev"` in `routers/auth.py`. In all other environments (`staging`,
+`production`, …) only `{"message": "..."}` is returned. This prevents the verification bypass from
+leaking to non-dev deployments: a caller cannot self-verify without actual email access unless the
+server is explicitly running in dev mode. When the notification pipeline is wired (§9 follow-up), the
+`verify_token` dev shortcut should be removed entirely.
 
 **Provider discovery (`GET /auth/providers`)** — lists **every theoretically-supported provider**
 (`SUPPORTED_OAUTH_PROVIDERS`, §2), each marked `available` according to
