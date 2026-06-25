@@ -62,12 +62,18 @@ sequenceDiagram
     API->>PG: BEGIN
     API->>PG: SELECT capacity, starts_at FROM events WHERE id=? FOR UPDATE
     Note over PG: Serializes concurrent cancellations for the same event
+    API->>PG: SELECT status FROM registrations WHERE id=? FOR UPDATE
+    Note over PG: Re-read under the lock — guards against a double-cancel race
+    opt status = 'cancelled'
+        API->>PG: ROLLBACK
+        API-->>Client: 409 Conflict (already cancelled)
+    end
     opt NOW() >= starts_at
         API->>PG: ROLLBACK
         API-->>Client: 409 Conflict (code: event_already_started)
     end
     API->>PG: UPDATE registrations SET status='cancelled', cancelled_at=NOW() WHERE id=? AND student_id=?
-    API->>PG: SELECT id FROM registrations WHERE event_id=? AND status='waitlisted' ORDER BY registered_at ASC LIMIT 1
+    API->>PG: SELECT id FROM registrations WHERE event_id=? AND status='waitlisted' ORDER BY registered_at, id ASC LIMIT 1
     alt waitlist not empty
         API->>PG: UPDATE registrations SET status='confirmed' WHERE id=?
         API->>PG: INSERT notification_jobs (type='WaitlistPromoted', status='pending')
@@ -78,6 +84,12 @@ sequenceDiagram
 ```
 
 If the cancelling student was **waitlisted** (not confirmed), no seat is freed and the promotion step is skipped. This is a separate code path with the same transaction structure.
+
+!!! warning "Re-read the registration *after* taking the event lock"
+    A naive version reads the registration first and locks the event second. Two concurrent cancellations of the same registration then both observe `confirmed`, serialize on the event lock, and the second acts on its stale snapshot — promoting a second waitlisted student in error. We re-read the registration with `FOR UPDATE` *inside* the lock so the decision uses committed state. See [Challenges #1](challenges.md#1-the-double-cancel-race).
+
+!!! note "Deterministic FIFO needs a tie-breaker"
+    Two registrations can share an identical `registered_at` microsecond, and Postgres does not guarantee order on a tie. Every waitlist ordering uses `ORDER BY registered_at, id` so promotion, the organizer waitlist, and the displayed position always agree. See [Challenges #2](challenges.md#2-identical-timestamps-broke-fifo).
 
 !!! note "Cancellation window"
     Students may cancel only **before the event's `starts_at`**. A cancellation attempt at or after `starts_at` is rejected with `409 Conflict` / `event_already_started`.
@@ -90,23 +102,16 @@ If the cancelling student was **waitlisted** (not confirmed), no seat is freed a
 
 The waitlist position shown to a student in `GET /registrations/me` is computed at read time — no stored integer that can drift under concurrent writes.
 
+An earlier version ran one `COUNT(*)` per waitlisted registration (an N+1), and counted `registered_at < mine`, which assigns the same position to two rows that tie on the timestamp. The shipped version uses a **single** ordered read across all the student's waitlisted events and assigns positions in one in-memory pass, with `id` breaking ties so the number matches promotion order:
+
 ```sql
--- For /registrations/me: student is waitlisted across multiple events
-SELECT
-    r.id,
-    r.event_id,
-    r.status,
-    r.registered_at,
-    (
-        SELECT COUNT(*) + 1
-        FROM registrations r2
-        WHERE r2.event_id     = r.event_id
-          AND r2.status       = 'waitlisted'
-          AND r2.registered_at < r.registered_at  -- how many are ahead of me
-    ) AS waitlist_position
-FROM registrations r
-WHERE r.student_id = $current_user_id
-  AND r.status     = 'waitlisted';
+-- One query for all events the student is waitlisted in
+SELECT id, event_id
+FROM registrations
+WHERE event_id = ANY($waitlisted_event_ids)
+  AND status   = 'waitlisted'
+ORDER BY event_id, registered_at, id;
+-- Position = rank within each event_id group, computed in application code.
 ```
 
-The `idx_registrations_waitlist_fifo` index covers the inner count query directly.
+The `idx_registrations_waitlist_fifo` partial index covers this read directly. See [Challenges #4](challenges.md#4-an-n1-in-registrationsme).

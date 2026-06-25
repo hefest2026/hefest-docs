@@ -52,5 +52,6 @@ nav:
       - Notification Pipeline: architecture/pipeline.md
       - API Reference: architecture/api.md
       - Operations: architecture/operations.md
+      - Challenges & Lessons: architecture/challenges.md
   - Criteria:
       - Grading Criteria: criteria/grading-criteria.md
